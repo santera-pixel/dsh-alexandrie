@@ -1,0 +1,117 @@
+name: Release gate
+
+# A release is only allowed when both of these hold:
+#
+#   1. the release tree is exactly `dev` minus `tests/` — that is the only
+#      difference `scripts/sync-main.mjs` ever creates;
+#   2. the newest completed CI run for that `dev` commit succeeded, i.e. the
+#      full suite really ran against this code, not just locally.
+#
+# Reusable: `release.yml` calls this job for every `v*` tag, and the `push`
+# trigger below covers `main` directly. Keeping the gate in one file means the
+# tag run and the branch run can never drift apart.
+#
+# Why a throwaway index instead of `git ls-tree | git mktree`: `mktree` reads a
+# non-recursive `ls-tree`, so a recursive listing flattened to "a/b" names
+# would build a different (and invalid) tree. `read-tree` + `rm --cached` +
+# `write-tree` drops `tests/` while leaving every nested tree valid, so the
+# resulting id is comparable byte for byte with the other branch.
+on:
+  workflow_call:
+    outputs:
+      dev_sha:
+        description: dev commit whose green CI run was verified
+        value: ${{ jobs.gate.outputs.dev_sha }}
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      dev_sha: ${{ steps.parity.outputs.dev_sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history so `origin/dev` is available inside the tag checkout.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Fetch dev
+        run: git fetch --no-tags origin dev
+
+      - name: Release tree is dev minus tests/
+        id: parity
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          code_tree() {
+            local ref="$1" index tree
+            index="$(mktemp)"
+            GIT_INDEX_FILE="$index" git read-tree "$ref"
+            GIT_INDEX_FILE="$index" git rm -r -q -f --cached --ignore-unmatch tests
+            tree="$(GIT_INDEX_FILE="$index" git write-tree)"
+            rm -f "$index"
+            echo "$tree"
+          }
+
+          dev_sha="$(git rev-parse origin/dev)"
+          dev_tree="$(code_tree "$dev_sha")"
+          release_tree="$(code_tree HEAD)"
+
+          echo "dev     ${dev_sha} -> ${dev_tree}"
+          echo "release ${GITHUB_SHA} -> ${release_tree}"
+
+          if [ "$dev_tree" != "$release_tree" ]; then
+            echo "::error::The release tree is not dev minus tests/. Rebuild main with 'npm run sync:main' from a clean dev checkout, wait for dev CI, then tag that commit."
+            exit 1
+          fi
+
+          # A tag on a dev commit has the same code tree, so the comparison
+          # above would pass; what distinguishes it is the shipped `tests/`.
+          if git cat-file -e "HEAD:tests" 2>/dev/null; then
+            echo "::error::This ref ships tests/; release tags must point at the main tree (npm run sync:main), not at dev."
+            exit 1
+          fi
+
+          echo "dev_sha=${dev_sha}" >> "$GITHUB_OUTPUT"
+          echo "dev_sha=${dev_sha}" >> "$GITHUB_ENV"
+
+      - name: Newest completed dev CI run is green
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          url="${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs?branch=dev&status=completed&per_page=1"
+          curl -fsSL \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            -o dev-runs.json "$url"
+
+          node -e '
+            const fs = require("fs");
+            const run = (JSON.parse(fs.readFileSync("dev-runs.json", "utf8")).workflow_runs || [])[0];
+            if (!run) {
+              console.error("::error::No completed CI run on dev yet. Push dev and let the full suite go green first.");
+              process.exit(1);
+            }
+            if (run.head_sha !== process.env.DEV_SHA) {
+              console.error(`::error::The newest completed dev run is for ${run.head_sha}, but dev head is ${process.env.DEV_SHA}. Wait for the run at dev head to finish green.`);
+              process.exit(1);
+            }
+            if (run.conclusion !== "success") {
+              console.error(`::error::dev CI concluded "${run.conclusion}" for ${run.head_sha} (${run.html_url}). Fix dev before releasing.`);
+              process.exit(1);
+            }
+            console.log(`dev CI green for ${run.head_sha} (${run.html_url})`);
+          '

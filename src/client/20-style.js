@@ -386,6 +386,29 @@ const BASE_CSS = `
 .dsh-scr-list-actions { display: flex; gap: 2px; opacity: .35; transition: opacity .15s ease; }
 .dsh-scr-list-row:hover .dsh-scr-list-actions { opacity: 1; }
 
+/* ---------- save conflict ---------- */
+.dsh-scr-conflict {
+  display: flex; align-items: center; gap: 10px;
+  flex: 0 0 auto;
+  z-index: 4;
+  padding: 9px 14px;
+  border-bottom: 1px solid color-mix(in srgb, var(--dsw-alias-state-error-primary) 38%, transparent);
+  background: color-mix(in srgb, var(--dsw-alias-state-error-primary) 10%, var(--dsw-alias-bg-base));
+  animation: dsh-scr-fade .2s ease both;
+}
+.dsh-scr-conflict > svg { flex: 0 0 auto; color: var(--dsw-alias-state-error-primary); }
+.dsh-scr-conflict-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.dsh-scr-conflict-text strong { font-size: 12.5px; color: var(--dsw-alias-label-primary); }
+.dsh-scr-conflict-text span { font-size: 11.5px; color: var(--dsw-alias-label-secondary); }
+.dsh-scr-conflict-pill {
+  display: flex; align-items: center; gap: 8px; flex: 0 0 auto;
+  padding: 5px 12px;
+  border-bottom: 1px solid var(--dsw-alias-border-l1);
+  background: color-mix(in srgb, var(--dsw-alias-state-error-primary) 8%, var(--dsw-alias-bg-layer-1));
+  font-size: 11.5px; color: var(--dsw-alias-label-secondary);
+}
+.dsh-scr-conflict-pill > svg { color: var(--dsw-alias-state-error-primary); }
+
 /* ---------- empty / skeleton / toast ---------- */
 .dsh-scr-empty {
   display: flex; flex-direction: column; align-items: center; justify-content: center;

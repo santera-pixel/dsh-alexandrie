@@ -1,6 +1,6 @@
 {
   "name": "dsh-scriptorium",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A project knowledge base for the DSH Web GUI: workspaces bound to Harness projects, nested documents, extended Markdown editor with live preview, full-text search, command palette, kanban board, free-form media canvas, Obsidian-style mind graph, tags, favourites and trash. Installs through the official DSH plugin system.",
   "type": "module",
   "main": "lib/index.js",
@@ -32,7 +32,7 @@
   "scripts": {
     "build": "node build.mjs",
     "prepare": "node build.mjs",
-    "test": "node tests/smoke.mjs && node tests/render.mjs && node tests/crud.mjs && node tests/editor.mjs && node tests/interactions.mjs && node tests/canvas.mjs && node tests/graph.mjs && node tests/merge.mjs && node tests/archive.mjs && node tests/canvas-import.mjs && node tests/compat.mjs && node tests/migrate.mjs && node tests/downgrade.mjs && node tests/projects.mjs && node tests/http.mjs && node tests/export.mjs",
+    "test": "node tests/smoke.mjs && node tests/render.mjs && node tests/crud.mjs && node tests/editor.mjs && node tests/interactions.mjs && node tests/canvas.mjs && node tests/graph.mjs && node tests/merge.mjs && node tests/archive.mjs && node tests/zip-budget.mjs && node tests/canvas-import.mjs && node tests/compat.mjs && node tests/migrate.mjs && node tests/downgrade.mjs && node tests/projects.mjs && node tests/http.mjs && node tests/export.mjs",
     "test:battle": "node tests/battle.mjs",
     "test:gui": "node tests/gui.mjs",
     "test:live": "node tests/live.mjs",

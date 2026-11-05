@@ -1,0 +1,66 @@
+name: Release
+
+# Every `v*` tag must prove itself against the full suite, even though `main`
+# and the tag ship without `tests/`. The job checks out the tagged tree, puts
+# the dev suites back (`git checkout <dev-sha> -- tests/`), and runs everything
+# the dev CI runs. A red suite fails the release — the tag stays pushed, but
+# the workflow says plainly that this tree is not releasable.
+#
+# `gate` (reusable, see release-gate.yml) also runs on pushes to `main`: the
+# release branch is only valid when it is exactly `dev` minus `tests/` and the
+# dev CI run for that commit is green.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  gate:
+    uses: ./.github/workflows/release-gate.yml
+
+  suites:
+    needs: gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Restore the suites from dev
+        shell: bash
+        env:
+          DEV_SHA: ${{ needs.gate.outputs.dev_sha }}
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin dev
+          # Pinned to the commit the gate verified, so a dev push racing this
+          # job cannot swap in tests for different code.
+          git cat-file -e "${DEV_SHA}:tests/smoke.mjs"
+          git checkout "${DEV_SHA}" -- tests/
+          echo "restored $(git diff --cached --name-only --diff-filter=A -- tests/ | wc -l) test files from ${DEV_SHA}"
+
+      - name: Install dev dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Rebuild the browser bundle
+        run: npm run build
+
+      - name: Bundle is committed up to date
+        run: git diff --exit-code -- lib/client.js
+
+      - name: Host and model suites
+        run: npm test
+
+      - name: Adversarial suite
+        run: npm run test:battle
+
+      - name: DOM end-to-end suite
+        run: npm run test:gui

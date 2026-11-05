@@ -184,6 +184,8 @@ function App({ store }) {
   const [query, setQuery] = React.useState('')
   const [previewMedia, setPreviewMedia] = React.useState(null)
   const [busy, setBusy] = React.useState(null)
+  // Whether the user hid the conflict banner; a fresh conflict clears it again.
+  const [conflictHidden, setConflictHidden] = React.useState(false)
   const bootedRef = React.useRef(false)
   const projectSyncedRef = React.useRef(false)
 
@@ -217,6 +219,31 @@ function App({ store }) {
   }, [])
 
   const commit = (mutator, options) => store.commit(mutator, options)
+
+  const conflict = store.state.conflict || null
+  const conflictStamp = conflict === null ? '' : String(conflict.at) + '|' + String(conflict.currentRevision)
+
+  // A new conflict always reopens the banner, even when the previous one was dismissed.
+  React.useEffect(() => {
+    setConflictHidden(false)
+  }, [conflictStamp])
+
+  // The host flags a save that carried no expectedRevision (compat path); surface it once.
+  const saveWarning = store.state.saveWarning || null
+  React.useEffect(() => {
+    if (saveWarning === null) return
+    notify(saveWarning, 'info')
+    if (typeof store.clearWarning === 'function') store.clearWarning()
+  }, [saveWarning])
+
+  const resolveConflict = (kind) => {
+    const run = store[kind]
+    if (typeof run !== 'function') return
+    run().then((outcome) => {
+      if (outcome === 'conflict') notify('The host changed again; resolve the new conflict.', 'error')
+      else if (outcome === false) notify('Could not reload the host copy.', 'error')
+    })
+  }
 
   const actions = {
     view,
@@ -345,7 +372,11 @@ function App({ store }) {
     openSettings: () => setSettingsOpen(true),
     saveNow: () => store.saveNow(),
     reload: () => void store.load(),
-    emptyTrash: () => commit((draft) => { draft.nodes = draft.nodes.filter((node) => node.trashed !== true) }, { immediate: true }),
+    emptyTrash: () => commit((draft) => {
+      // Purge through the model so canvas cards (and the attachments they own) are
+      // removed together with the documents.
+      for (const id of draft.nodes.filter((node) => node.trashed === true).map((node) => node.id)) model.purgeNode(draft, id)
+    }, { immediate: true }),
     exportDocument: (id) => {
       const node = model.nodeById(snapshot, id)
       if (node === null) return
@@ -520,7 +551,7 @@ function App({ store }) {
         else if (view === 'tag') {
           setTagFilter(null)
           setView('doc')
-        }
+        } else if (conflict !== null) setConflictHidden(true)
         return
       }
       // Everything else stays out of the way while the caret is inside a field: the editor
@@ -764,6 +795,39 @@ function App({ store }) {
       h(IconButton, { icon: 'command', label: 'Command palette (Ctrl+K)', onClick: () => setPaletteOpen(true) }),
       h(IconButton, { icon: 'settings', label: 'Settings', onClick: () => setSettingsOpen(true) }),
     ),
+    conflict === null || conflictHidden
+      ? null
+      : h(
+          'div',
+          { className: 'dsh-scr-conflict', role: 'alert', 'data-current-revision': String(conflict.currentRevision) },
+          h(Icon, { name: 'warning', size: 15 }),
+          h(
+            'div',
+            { className: 'dsh-scr-conflict-text' },
+            h('strong', null, 'This knowledge base changed on the host'),
+            h(
+              'span',
+              null,
+              conflict.currentRevision === null
+                ? 'Another session saved after this tab loaded revision ' + conflict.localRevision + '.'
+                : 'Another session saved revision ' + conflict.currentRevision + ' after this tab loaded revision ' + conflict.localRevision + '.',
+            ),
+            h('span', null, 'Autosave is paused. Reload takes the host copy and drops the local edits; Overwrite replaces the host copy with them.'),
+          ),
+          h('span', { className: 'dsh-scr-spacer' }),
+          h('button', { type: 'button', className: 'dsh-scr-btn', onClick: () => resolveConflict('reload') }, h(Icon, { name: 'restore', size: 13 }), 'Reload'),
+          h('button', { type: 'button', className: 'dsh-scr-btn is-primary', onClick: () => resolveConflict('overwrite') }, 'Overwrite'),
+          h(IconButton, { icon: 'close', label: 'Hide this banner (Esc)', onClick: () => setConflictHidden(true) }),
+        ),
+    conflict !== null && conflictHidden
+      ? h(
+          'div',
+          { className: 'dsh-scr-conflict-pill' },
+          h(Icon, { name: 'warning', size: 12 }),
+          h('span', null, 'Unresolved save conflict'),
+          h('button', { type: 'button', className: 'dsh-scr-btn is-ghost', onClick: () => setConflictHidden(false) }, 'Resolve'),
+        )
+      : null,
     h(
       'div',
       { className: 'dsh-scr-body', 'data-tick': tick },

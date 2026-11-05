@@ -335,6 +335,99 @@ check('media paths reject ids that are not plain identifiers', async () => {
   assert.equal(result.json.ok, false)
 })
 
+// ---- media hardening (card t-mw3r61os-yd6yyb) ----------------------------------------------
+// `/media/<id>` is same-origin with the Harness GUI, so every response is nosniff, only
+// raster images and PDFs render inline, and a payload whose bytes are markup is demoted to a
+// download even when its sidecar MIME claims an image type.
+async function uploadMedia(name, mime, bytes) {
+  const result = await request('/media', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ name, mime, dataBase64: Buffer.from(bytes).toString('base64') }),
+  })
+  assert.equal(result.status, 200, 'upload of ' + name + ' succeeded')
+  return result.json.value
+}
+
+const hostileSvg = Buffer.from(
+  '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="80" onload="window.__pwned = true">' +
+    '<script>window.__pwned = true</script><rect width="120" height="80" fill="#c00"/></svg>',
+  'utf8',
+)
+
+check('media responses are nosniff, and raster images still preview inline', async () => {
+  const entry = await uploadMedia('guard.png', 'image/png', png)
+  const inline = await request('/media/' + entry.id)
+  assert.equal(inline.status, 200)
+  assert.equal(inline.headers['x-content-type-options'], 'nosniff')
+  assert.equal(inline.headers['content-type'], 'image/png')
+  assert.match(String(inline.headers['content-disposition']), /^inline/)
+  assert.deepEqual([...inline.raw], [...png])
+
+  const downloaded = await request('/media/' + entry.id + '?download=1')
+  assert.equal(downloaded.headers['x-content-type-options'], 'nosniff')
+  assert.match(String(downloaded.headers['content-disposition']), /^attachment/)
+})
+
+check('PDF stays an inline preview, with nosniff', async () => {
+  const pdf = Buffer.from('%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n', 'latin1')
+  const entry = await uploadMedia('paper.pdf', 'application/pdf', pdf)
+  const result = await request('/media/' + entry.id)
+  assert.equal(result.headers['x-content-type-options'], 'nosniff')
+  assert.equal(result.headers['content-type'], 'application/pdf')
+  assert.match(String(result.headers['content-disposition']), /^inline/)
+  assert.deepEqual([...result.raw], [...pdf])
+})
+
+check('SVG is served as a download with a generic type, never inline', async () => {
+  const entry = await uploadMedia('vector.svg', 'image/svg+xml', hostileSvg)
+  const result = await request('/media/' + entry.id)
+  assert.equal(result.status, 200)
+  assert.equal(result.headers['x-content-type-options'], 'nosniff')
+  assert.equal(result.headers['content-type'], 'application/octet-stream')
+  assert.match(String(result.headers['content-disposition']), /^attachment; filename="vector\.svg"/)
+  assert.deepEqual([...result.raw], [...hostileSvg], 'the bytes still round-trip for a download')
+})
+
+check('HTML, CSS, JS and unknown types are downloads too', async () => {
+  const cases = [
+    ['page.html', 'text/html', Buffer.from('<html><script>alert(1)</script></html>')],
+    ['style.css', 'text/css', Buffer.from('body { background: url(javascript:alert(1)) }')],
+    ['app.js', 'text/javascript', Buffer.from('window.__pwned = true')],
+    ['odd.bin', 'application/x-msdownload', Buffer.from('MZ not really')],
+  ]
+  for (const [name, mime, bytes] of cases) {
+    const entry = await uploadMedia(name, mime, bytes)
+    const result = await request('/media/' + entry.id)
+    assert.equal(result.headers['x-content-type-options'], 'nosniff', name + ' is nosniff')
+    assert.equal(result.headers['content-type'], 'application/octet-stream', name + ' is flattened')
+    assert.match(String(result.headers['content-disposition']), /^attachment/, name + ' is a download')
+  }
+})
+
+check('a renamed image whose bytes are markup is demoted to a download', async () => {
+  const renamed = [
+    ['doctype.png', 'image/png', Buffer.from('<!doctype html><script>window.__pwned = 1</script>')],
+    ['markup.jpg', 'image/jpeg', Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"><script>window.__pwned = 1</script></svg>')],
+    ['bom.gif', 'image/gif', Buffer.from('\uFEFF  <?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg"/>', 'utf8')],
+  ]
+  for (const [name, mime, bytes] of renamed) {
+    const entry = await uploadMedia(name, mime, bytes)
+    const result = await request('/media/' + entry.id)
+    assert.equal(result.headers['content-type'], 'application/octet-stream', name + ' is not served as its claimed image')
+    assert.match(String(result.headers['content-disposition']), /^attachment/, name + ' is forced to download')
+    assert.equal(result.headers['x-content-type-options'], 'nosniff')
+  }
+})
+
+check('audio and video are downloads as well (the player loads them as a subresource)', async () => {
+  const entry = await uploadMedia('tone.mp3', 'audio/mpeg', Buffer.from([0x49, 0x44, 0x33, 4, 0, 0, 0, 0]))
+  const result = await request('/media/' + entry.id)
+  assert.match(String(result.headers['content-disposition']), /^attachment/)
+  assert.equal(result.headers['x-content-type-options'], 'nosniff')
+  assert.equal(result.headers['content-type'], 'audio/mpeg')
+})
+
 for (const run of pending) await run()
 
 server.close()

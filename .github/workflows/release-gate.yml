@@ -83,7 +83,7 @@ jobs:
           fi
 
           echo "dev_sha=${dev_sha}" >> "$GITHUB_OUTPUT"
-          echo "dev_sha=${dev_sha}" >> "$GITHUB_ENV"
+          echo "DEV_SHA=${dev_sha}" >> "$GITHUB_ENV"
 
       - name: Newest completed dev CI run is green
         env:

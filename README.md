@@ -180,13 +180,13 @@ what the plugin hub installs — ships without them, and the npm tarball never i
 | `tests/downgrade.mjs` | a pre-canvas build's fixed-key rewrite of `data.json` is recovered from the layout copy on the next load: positions/sizes/links restored, document edits kept, deleted-document cards pruned, idempotent cycles, export carries the layout | 7 |
 | `tests/projects.mjs` | project sync (create/adopt/rename/missing/idempotent), unsafe ids ignored, linking and merge-into-existing semantics, store project state success/failure | 11 |
 | `tests/migrate.mjs` | the pre-rename data directory is moved into place on mount with documents, attachments, layout copy and revision counter intact; a second mount repeats nothing | 1 |
-| `tests/http.mjs` | the real host half on a throwaway server: state/save, project mirror + malformed file, media, ZIP export/import including the board round-trip, a bomb import answering 400 without touching the store, and nested-validation 400 paths | NN |
+| `tests/http.mjs` | the real host half on a throwaway server: state/save, project mirror + malformed file, media, ZIP export/import including the board round-trip, a bomb import answering 400 without touching the store, nested-validation 400 paths, and 409 conflicts on stale revisions | 35 |
 | `tests/export.mjs` | Markdown and JSON download naming and payload | 3 |
-| `tests/gui.mjs` | the built bundle in jsdom against a throwaway host: mount, create, type, preview, Ctrl+K, search, board move, trash/restore, settings, upload→canvas→drag→zoom, graph→connect→filter — asserting on the rendered DOM and on `data.json` | 10 |
+| `tests/gui.mjs` | the built bundle in jsdom against a throwaway host: mount, create, type, preview, Ctrl+K, search, board move, trash/restore, settings, upload→canvas→drag→zoom, graph→connect→filter, hostile-SVG preview, and the 409 banner (Reload/Overwrite) — asserting on the rendered DOM and on `data.json` | 13 |
 | `tests/battle.mjs` | adversarial pass: 400-operation model fuzz with invariants, hostile canvas payloads, wiki-link abuse, 800-node layout budget, concurrent saves, traversal names, broken archives, 3000-document round-trip | 10 |
 | `tests/live.mjs` | the running harness (health/state/save/conflict/export/projects) | 9 |
 
-TOTAL checks in total (NODE node suites, 10 jsdom GUI, 10 adversarial, 9 live).
+279 checks in total (247 node suites, 13 jsdom GUI, 10 adversarial, 9 live).
 
 The suites live in `tests/` on the **dev** branch. `main` — what GitHub shows, what the hub
 installs and what npm publishes — is `dev` minus `tests/`, so a plain checkout of `main` contains

@@ -1,6 +1,6 @@
 {
   "name": "dsh-scriptorium",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A project knowledge base for the DSH Web GUI: workspaces bound to Harness projects, nested documents, extended Markdown editor with live preview, full-text search, command palette, kanban board, free-form media canvas, Obsidian-style mind graph, tags, favourites and trash. Installs through the official DSH plugin system.",
   "type": "module",
   "main": "lib/index.js",

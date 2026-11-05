@@ -55,6 +55,15 @@ function subtreeIds(snapshot, nodeId) {
   return ids
 }
 
+/** Drop canvas cards and links whose target ids are in `dropped`. */
+function dropCanvasRefs(snapshot, dropped) {
+  if (snapshot.canvas === undefined || snapshot.canvas === null) return
+  snapshot.canvas.items = (Array.isArray(snapshot.canvas.items) ? snapshot.canvas.items : []).filter((item) => item !== null && !dropped.has(item.id))
+  snapshot.canvas.links = (Array.isArray(snapshot.canvas.links) ? snapshot.canvas.links : []).filter(
+    (link) => link !== null && !dropped.has(link.from) && !dropped.has(link.to),
+  )
+}
+
 const wordCountOf = (text) => {
   const cleaned = String(text || '').replace(/[`*_>#\-\[\]\(\)!|]/g, ' ')
   const matches = cleaned.match(/[\p{L}\p{N}']+/gu)
@@ -503,9 +512,17 @@ const model = {
   },
 
   removeWorkspace(draft, workspaceId) {
-    const victimIds = subtreeIds(draft, workspaceId)
+    const victims = draft.nodes.filter((node) => node.workspaceId === workspaceId)
+    const victimIds = victims.map((node) => node.id)
+    // The workspace owns its documents and attachments, so their canvas cards must go
+    // with them; otherwise the next save would carry references to deleted nodes.
+    const dropped = new Set(victimIds.map((id) => 'doc:' + id))
+    for (const node of victims) {
+      for (const media of mediaOf(node)) dropped.add('media:' + String(media.id))
+    }
     draft.nodes = draft.nodes.filter((node) => node.workspaceId !== workspaceId)
     draft.workspaces = draft.workspaces.filter((workspace) => workspace.id !== workspaceId)
+    dropCanvasRefs(draft, dropped)
     if (draft.ui.activeWorkspaceId === workspaceId) {
       draft.ui.activeWorkspaceId = draft.workspaces.length > 0 ? draft.workspaces[0].id : null
     }
@@ -602,12 +619,7 @@ const model = {
       for (const media of mediaOf(node)) dropped.add('media:' + String(media.id))
     }
     draft.nodes = draft.nodes.filter((node) => ids.indexOf(node.id) < 0)
-    if (draft.canvas !== undefined && draft.canvas !== null) {
-      draft.canvas.items = (Array.isArray(draft.canvas.items) ? draft.canvas.items : []).filter((item) => item !== null && !dropped.has(item.id))
-      draft.canvas.links = (Array.isArray(draft.canvas.links) ? draft.canvas.links : []).filter(
-        (link) => link !== null && !dropped.has(link.from) && !dropped.has(link.to),
-      )
-    }
+    dropCanvasRefs(draft, dropped)
   },
 
   /** Move a node to another folder/workspace, keeping sibling order sane. */

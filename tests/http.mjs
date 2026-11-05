@@ -8,6 +8,7 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { apply } from '../lib/index.js'
+import { buildArchive } from '../lib/archive.js'
 import { parseZip } from '../lib/zip.js'
 
 let passed = 0
@@ -125,18 +126,15 @@ const snapshot = {
   ],
   settings: { autoSave: true, editorMode: 'split' },
   ui: { activeWorkspaceId: 'ws-1', activeNodeId: 'doc-1', expanded: [] },
-  // A board with two cards, one link, and two references that cannot survive an
-  // import (a missing attachment and a dangling link). The layout must travel
-  // through the ZIP with its geometry, minus the dead references.
+  // A board with two cards and one link. The layout must travel through the ZIP with
+  // its geometry; dangling references are covered separately by a hand-built archive.
   canvas: {
     items: [
       { id: 'doc:doc-1', kind: 'doc', refId: 'doc-1', x: 80, y: 60, w: 320, h: 260, z: 0 },
       { id: 'doc:doc-2', kind: 'doc', refId: 'doc-2', x: 520, y: 60, w: 300, h: 240, z: 1 },
-      { id: 'media:missing', kind: 'media', refId: 'missing', x: 0, y: 0, w: 300, h: 240, z: 2 },
     ],
     links: [
       { id: 'link:doc:doc-1::doc:doc-2', from: 'doc:doc-1', to: 'doc:doc-2' },
-      { id: 'link:doc:doc-1::media:missing', from: 'doc:doc-1', to: 'media:missing' },
     ],
   },
   graph: { showTags: true, showLabels: true, scopeAll: false },
@@ -267,7 +265,7 @@ check('ZIP export streams a readable archive with manifest, note and media', asy
   assert.ok(names.some((name) => name.startsWith('notes/')))
   assert.ok(names.some((name) => name.startsWith('media/')))
   const manifest = JSON.parse(parseZip(result.raw).find((entry) => entry.name === 'manifest.json').data.toString('utf8'))
-  assert.equal(manifest.snapshot.canvas.items.length, 3, 'the exported archive carries the board')
+  assert.equal(manifest.snapshot.canvas.items.length, 2, 'the exported archive carries the board')
   assert.deepEqual(manifest.snapshot.graph, snapshot.graph)
   archiveZip = result.raw
 })
@@ -285,12 +283,12 @@ check('ZIP import remaps the archive and stores its media', async () => {
   assert.equal(after.json.value.entries.length, before.json.value.entries.length + 1)
 })
 
-check('ZIP import carries the board onto the remapped ids, minus dead references', async () => {
+check('ZIP import carries the board onto the remapped ids', async () => {
   const result = await request('/archive/import', { method: 'POST', headers: { 'content-type': 'application/zip' }, body: archiveZip })
   const value = result.json.value
   const canvas = value.snapshot.canvas
   assert.ok(canvas && Array.isArray(canvas.items) && Array.isArray(canvas.links), 'imported snapshot has a canvas')
-  assert.equal(canvas.items.length, 2, 'the missing-attachment card is dropped')
+  assert.equal(canvas.items.length, 2, 'both cards survive')
   const docIds = new Set(value.snapshot.nodes.map((node) => node.id))
   const cardIds = new Set(canvas.items.map((item) => item.id))
   for (const item of canvas.items) {
@@ -300,11 +298,24 @@ check('ZIP import carries the board onto the remapped ids, minus dead references
   const welcome = value.snapshot.nodes.find((node) => node.title === 'Welcome guide')
   const card = canvas.items.find((item) => item.refId === welcome.id)
   assert.deepEqual([card.x, card.y, card.w, card.h], [80, 60, 320, 260], 'geometry survives the round-trip')
-  assert.equal(canvas.links.length, 1, 'the dangling link is dropped')
+  assert.equal(canvas.links.length, 1)
   const link = canvas.links[0]
   assert.ok(cardIds.has(link.from) && cardIds.has(link.to), 'link endpoints are imported cards')
   assert.equal(link.id, 'link:' + [link.from, link.to].sort().join('::'))
   assert.deepEqual(value.snapshot.graph, snapshot.graph, 'graph preferences travel with the archive')
+})
+
+check('ZIP import prunes dangling canvas references before accepting the archive', async () => {
+  // remapSnapshot drops references to nodes/attachments that did not survive the
+  // import; the host validates the pruned result rather than rejecting the archive.
+  const dirty = JSON.parse(JSON.stringify(snapshot))
+  dirty.canvas.items.push({ id: 'media:missing', kind: 'media', refId: 'missing', x: 0, y: 0, w: 300, h: 240, z: 2 })
+  dirty.canvas.links.push({ id: 'link:doc:doc-1::media:missing', from: 'doc:doc-1', to: 'media:missing' })
+  const zip = buildArchive({ snapshot: dirty, media: [] })
+  const result = await request('/archive/import', { method: 'POST', headers: { 'content-type': 'application/zip' }, body: zip })
+  assert.equal(result.status, 200)
+  assert.equal(result.json.value.snapshot.canvas.items.length, 2, 'the missing-attachment card is dropped')
+  assert.equal(result.json.value.snapshot.canvas.links.length, 1, 'the dangling link is dropped')
 })
 
 check('a broken ZIP body answers 400 instead of crashing the route', async () => {
@@ -333,6 +344,91 @@ check('media paths reject ids that are not plain identifiers', async () => {
   const result = await request('/media/..%2F..%2Fdata.json')
   assert.equal(result.status, 400)
   assert.equal(result.json.ok, false)
+})
+
+/* ---------------------------------------------------------------------------------
+   Nested snapshot validation (schema-validation card). The route must answer 400 with
+   a message that starts at the exact offending path, never persist a half-valid board
+   and never crash on a hostile reference.
+   --------------------------------------------------------------------------------- */
+const validSnapshot = () => JSON.parse(JSON.stringify({
+  version: 1,
+  workspaces: [{ id: 'ws-v', name: 'Valid' }],
+  nodes: [{
+    id: 'doc-v',
+    workspaceId: 'ws-v',
+    parentId: null,
+    kind: 'doc',
+    title: 'Valid',
+    tags: ['ok'],
+    media: [{ id: 'media-v', name: 'a.png', mime: 'image/png', size: 1, uploadedAt: '2026-01-01T00:00:00.000Z' }],
+    content: '',
+  }],
+  settings: {},
+  ui: {},
+  canvas: { items: [], links: [] },
+  graph: { showTags: false, showLabels: true, scopeAll: false },
+}))
+const saveRaw = (snapshot) => request('/save', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ snapshot }) })
+
+check('nested validation names the offending tag and attachment paths', async () => {
+  const badTag = validSnapshot()
+  badTag.nodes[0].tags = ['ok', 7]
+  const tagResult = await saveRaw(badTag)
+  assert.equal(tagResult.status, 400)
+  assert.match(tagResult.json.error.message, /^nodes\[0\]\.tags\[1\]: must be a non-empty string/)
+
+  const badMedia = validSnapshot()
+  badMedia.nodes[0].media[0].id = ''
+  const mediaResult = await saveRaw(badMedia)
+  assert.equal(mediaResult.status, 400)
+  assert.match(mediaResult.json.error.message, /^nodes\[0\]\.media\[0\]\.id:/)
+})
+
+check('canvas cards and links must resolve to stored nodes and attachments', async () => {
+  const badCard = validSnapshot()
+  badCard.canvas.items = [{ id: 'media:ghost', kind: 'media', refId: 'ghost', x: 0, y: 0, w: 300, h: 240, z: 0 }]
+  const cardResult = await saveRaw(badCard)
+  assert.equal(cardResult.status, 400)
+  assert.match(cardResult.json.error.message, /^canvas\.items\[0\]\.refId: references missing attachment "ghost"/)
+
+  const badLink = validSnapshot()
+  badLink.canvas.items = [{ id: 'doc:doc-v', kind: 'doc', refId: 'doc-v', x: 0, y: 0, w: 300, h: 240, z: 0 }]
+  badLink.canvas.links = [{ id: 'link:doc:doc-v::doc:ghost', from: 'doc:doc-v', to: 'doc:ghost' }]
+  const linkResult = await saveRaw(badLink)
+  assert.equal(linkResult.status, 400)
+  assert.match(linkResult.json.error.message, /^canvas\.links\[0\]\.to: references missing canvas item "doc:ghost"/)
+})
+
+check('a node must belong to a workspace and graph prefs are typed', async () => {
+  const strayNode = validSnapshot()
+  strayNode.nodes[0].workspaceId = 'ws-ghost'
+  const nodeResult = await saveRaw(strayNode)
+  assert.equal(nodeResult.status, 400)
+  assert.match(nodeResult.json.error.message, /^nodes\[0\]\.workspaceId: references missing workspace "ws-ghost"/)
+
+  const badGraph = validSnapshot()
+  badGraph.graph.showTags = 'yes'
+  const graphResult = await saveRaw(badGraph)
+  assert.equal(graphResult.status, 400)
+  assert.match(graphResult.json.error.message, /^graph\.showTags: must be a boolean/)
+})
+
+check('a snapshot version newer than this build is rejected with version in the path', async () => {
+  const future = validSnapshot()
+  future.version = 2
+  const result = await saveRaw(future)
+  assert.equal(result.status, 400)
+  assert.match(result.json.error.message, /^version: snapshot version 2 is newer than this build supports/)
+})
+
+check('a ZIP import from a newer build is rejected before remapping downgrades it', async () => {
+  const future = JSON.parse(JSON.stringify(snapshot))
+  future.version = 2
+  const zip = buildArchive({ snapshot: future, media: [] })
+  const result = await request('/archive/import', { method: 'POST', headers: { 'content-type': 'application/zip' }, body: zip })
+  assert.equal(result.status, 400)
+  assert.match(result.json.error.message, /^version: snapshot version 2 is newer than this build supports/)
 })
 
 for (const run of pending) await run()

@@ -16,6 +16,9 @@ const MEDIA_MIME = {
 }
 
 const MEDIA_KIND_BY_MIME = [
+  // SVG is its own kind: the host refuses to serve it inline, and the preview scrubs it
+  // before rendering, so it must never take the plain raster `<img>` path.
+  ['image/svg+xml', 'svg'],
   ['image/', 'image'],
   ['application/pdf', 'pdf'],
   ['audio/', 'audio'],
@@ -49,7 +52,7 @@ function mediaKindOf(item) {
 
 function mediaIconOf(item) {
   const kind = mediaKindOf(item)
-  if (kind === 'image') return 'image'
+  if (kind === 'image' || kind === 'svg') return 'image'
   if (kind === 'pdf') return 'doc'
   if (kind === 'audio') return 'sparkles'
   if (kind === 'video') return 'eye'
@@ -176,6 +179,88 @@ function MediaTextPreview({ media }) {
   return h('pre', { className: 'dsh-scr-media-text' }, view.text)
 }
 
+/** Base64 for UTF-8 text without relying on `btoa` (the bundle also runs under jsdom). */
+function base64OfText(value) {
+  const bytes = typeof TextEncoder === 'function' ? new TextEncoder().encode(String(value)) : null
+  if (bytes === null) return ''
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+  let out = ''
+  for (let index = 0; index < bytes.length; index += 3) {
+    const first = bytes[index]
+    const second = index + 1 < bytes.length ? bytes[index + 1] : 0
+    const third = index + 2 < bytes.length ? bytes[index + 2] : 0
+    const triplet = (first << 16) | (second << 8) | third
+    out += alphabet[(triplet >> 18) & 63] + alphabet[(triplet >> 12) & 63]
+    out += index + 1 < bytes.length ? alphabet[(triplet >> 6) & 63] : '='
+    out += index + 2 < bytes.length ? alphabet[triplet & 63] : '='
+  }
+  return out
+}
+
+// Elements that can execute script or pull in foreign content, dropped with their bodies.
+const SVG_BLOCKED_ELEMENTS = 'script|foreignObject|iframe|object|embed|audio|video|use|image|feImage|animate|animateTransform|animateMotion|set|handler|listener'
+
+/**
+ * Scrub an SVG before previewing it: no scripting elements, no inline event handlers, no
+ * `javascript:`/`data:` URLs and no external references. The result is then rendered through
+ * `<img>`, which never executes SVG script, so this is defence in depth, not the only barrier.
+ */
+function sanitizeSvgText(source) {
+  let out = String(source === undefined || source === null ? '' : source)
+  // Drop every scripting/embedding element, paired or self-closing, including nested bodies.
+  const paired = new RegExp('<\\s*(' + SVG_BLOCKED_ELEMENTS + ')\\b[^>]*>[\\s\\S]*?<\\s*/\\s*\\1\\s*>', 'gi')
+  const single = new RegExp('<\\s*(?:' + SVG_BLOCKED_ELEMENTS + ')\\b[^>]*?/?>', 'gi')
+  out = out.replace(paired, '').replace(single, '')
+  // Inline handlers in any quoting style (onload=…, onclick=…).
+  out = out.replace(/[\s/]on[a-z]+\s*=\s*"[^"]*"/gi, '')
+  out = out.replace(/[\s/]on[a-z]+\s*=\s*'[^']*'/gi, '')
+  out = out.replace(/[\s/]on[a-z]+\s*=\s*[^\s>]+/gi, '')
+  // References: keep local fragments (`#gradient`), drop every remote or executable target.
+  out = out.replace(/\s(?:href|xlink:href|src)\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, (match, raw) => {
+    const target = String(raw).replace(/^["']|["']$/g, '').trim()
+    return target === '' || target.charAt(0) === '#' ? match : ''
+  })
+  // Script-bearing URLs anywhere else (style attributes, text, entity tricks).
+  out = out.replace(/(?:javascript|vbscript|data)\s*:/gi, '')
+  out = out.replace(/<!doctype[^>]*>/gi, '').replace(/<!entity[^>]*>/gi, '')
+  return out
+}
+
+/** SVG preview: fetch, scrub, then show as a data URL inside `<img>` (non-scripting by spec). */
+function SvgPreview({ media }) {
+  const state = React.useState({ status: 'loading', src: '', error: '' })
+  const view = state[0]
+  const setView = state[1]
+  React.useEffect(() => {
+    let alive = true
+    fetch(mediaUrl(media))
+      .then((response) => response.text())
+      .then((text) => {
+        if (!alive) return
+        if (text.length > 2000000) {
+          setView({ status: 'error', src: '', error: 'the file is too large to preview safely' })
+          return
+        }
+        const clean = sanitizeSvgText(text)
+        if (!/<\s*svg\b/i.test(clean)) {
+          setView({ status: 'error', src: '', error: 'the file is not a readable SVG document' })
+          return
+        }
+        setView({ status: 'ready', src: 'data:image/svg+xml;base64,' + base64OfText(clean), error: '' })
+      })
+      .catch((error) => {
+        if (!alive) return
+        setView({ status: 'error', src: '', error: String((error && error.message) || error) })
+      })
+    return () => {
+      alive = false
+    }
+  }, [media && media.id])
+  if (view.status === 'loading') return h('div', { className: 'dsh-scr-media-loading' }, 'Loading preview…')
+  if (view.status === 'error') return h('div', { className: 'dsh-scr-media-empty' }, 'Preview failed: ' + view.error + ' ')
+  return h('img', { className: 'dsh-scr-media-full dsh-scr-media-svg-full', src: view.src, alt: String(media.name || 'SVG') })
+}
+
 /** Modal preview for one attachment. */
 function MediaPreview(props) {
   const media = (props && props.media) || {}
@@ -206,10 +291,12 @@ function MediaPreview(props) {
       h(
         'div',
         { className: 'dsh-scr-media-stage dsh-scr-media-stage-' + kind },
-        kind === 'image'
-          ? h('img', { className: 'dsh-scr-media-full', src: mediaUrl(media), alt: String(media.name || '') })
-          : kind === 'pdf'
-            ? h('iframe', { className: 'dsh-scr-media-frame', src: mediaUrl(media), title: String(media.name || 'PDF'), loading: 'lazy' })
+        kind === 'svg'
+          ? h(SvgPreview, { media })
+          : kind === 'image'
+            ? h('img', { className: 'dsh-scr-media-full', src: mediaUrl(media), alt: String(media.name || '') })
+            : kind === 'pdf'
+              ? h('iframe', { className: 'dsh-scr-media-frame', src: mediaUrl(media), title: String(media.name || 'PDF'), loading: 'lazy' })
             : kind === 'audio'
               ? h('audio', { className: 'dsh-scr-media-audio', src: mediaUrl(media), controls: true })
               : kind === 'video'
@@ -237,7 +324,14 @@ function MediaLibrary(props) {
   const setKind = kindState[1]
   const entries = allMedia(snapshot)
   const kinds = ['all', 'image', 'pdf', 'audio', 'video', 'text', 'file']
-  const visible = kind === 'all' ? entries : entries.filter((entry) => mediaKindOf(entry.media) === kind)
+  // SVG previews as its own kind but still belongs in the image filter.
+  const visible =
+    kind === 'all'
+      ? entries
+      : entries.filter((entry) => {
+          const entryKind = mediaKindOf(entry.media)
+          return entryKind === kind || (kind === 'image' && entryKind === 'svg')
+        })
   return h(
     'div',
     { className: 'dsh-scr-media-library' },

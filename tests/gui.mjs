@@ -358,6 +358,57 @@ check('the mind graph maps the notes and can create a new connection', async () 
   await waitFor(() => qa('.dsh-scr-graph-node.is-dim').length > 0, 2000, 'non-matching nodes dim')
 })
 
+// ---- hostile SVG (card t-mw3r61os-yd6yyb) ---------------------------------------------------
+// An imported SVG must never run script in the GUI origin. The host serves it as a download
+// and the preview scrubs it before rendering it through <img> (which cannot execute SVG script).
+check('a hostile SVG attachment previews without running its script', async () => {
+  click(byText('.dsh-scr-seg-btn', 'Documents'))
+  await delay(250)
+  // The graph check leaves the graph view active; the smoke-test note is still the open document.
+  // When no editor is open yet, reopen it from the list first.
+  if (!q('.dsh-scr-editor-media')) {
+    const row = await waitFor(() => qa('.dsh-scr-list-row').find((el) => (el.textContent || '').includes('GUI smoke test')), 4000, 'document row')
+    click(row)
+  }
+  await waitFor(() => q('.dsh-scr-editor-media'), 4000, 'attachments section')
+  assert.equal((q('.dsh-scr-doc-title') || {}).value, 'GUI smoke test', 'the upload targets the smoke-test note')
+  const hostile =
+    '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="80" onload="window.__pwned = true">' +
+    '<script>window.__pwned = true</script><rect width="120" height="80" fill="#c00"/></svg>'
+  const file = new window.File([hostile], 'hostile.svg', { type: 'image/svg+xml' })
+  const uploaded = (value) => docsOf(value).some((node) => Array.isArray(node.media) && node.media.some((item) => item.name === 'hostile.svg'))
+  let state = null
+  for (let attempt = 0; attempt < 3 && state === null; attempt += 1) {
+    const input = q('.dsh-scr-editor-media input[type="file"]')
+    assert.ok(input, 'attachment file input exists')
+    Object.defineProperty(input, 'files', { value: [file], configurable: true })
+    input.dispatchEvent(new window.Event('change', { bubbles: true }))
+    try {
+      state = await waitForState(uploaded, 2500, 'uploaded hostile svg')
+    } catch (error) {
+      if (attempt === 2) throw error
+    }
+  }
+  const doc = docsOf(state).find((node) => node.title === 'GUI smoke test')
+  const stored = doc.media.find((item) => item.name === 'hostile.svg')
+  assert.equal(stored.mime, 'image/svg+xml', 'the SVG keeps its declared type in the snapshot')
+
+  click(byText('.dsh-scr-seg-btn', 'Media'))
+  await waitFor(() => q('.dsh-scr-media-library'), 4000, 'media library')
+  const tile = await waitFor(() => qa('.dsh-scr-media-tile').find((el) => (el.textContent || '').includes('hostile.svg')), 4000, 'hostile svg tile')
+  click(tile.querySelector('.dsh-scr-media-thumb'))
+  const image = await waitFor(() => q('.dsh-scr-media-svg-full'), 4000, 'sanitized svg preview')
+  assert.equal(window.__pwned, undefined, 'the SVG script never ran')
+  assert.equal(q('.dsh-scr-media-modal script'), null, 'no script element in the preview DOM')
+  const src = image.getAttribute('src')
+  assert.match(src, /^data:image\/svg\+xml;base64,/)
+  const decoded = Buffer.from(src.slice('data:image/svg+xml;base64,'.length), 'base64').toString('utf8')
+  assert.ok(decoded.includes('<rect'), 'the harmless artwork survives')
+  assert.ok(!/<script/i.test(decoded), 'the script element was stripped')
+  assert.ok(!/onload/i.test(decoded), 'the onload handler was stripped')
+  assert.ok(!/javascript:/i.test(decoded), 'no javascript: URL survives')
+})
+
 for (const run of pending) await run()
 
 root.unmount()

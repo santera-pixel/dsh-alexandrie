@@ -35,7 +35,8 @@
     "test": "node tests/smoke.mjs && node tests/render.mjs && node tests/crud.mjs && node tests/editor.mjs && node tests/interactions.mjs && node tests/canvas.mjs && node tests/graph.mjs && node tests/merge.mjs && node tests/archive.mjs && node tests/canvas-import.mjs && node tests/compat.mjs && node tests/downgrade.mjs && node tests/projects.mjs && node tests/http.mjs && node tests/export.mjs",
     "test:battle": "node tests/battle.mjs",
     "test:gui": "node tests/gui.mjs",
-    "test:live": "node tests/live.mjs"
+    "test:live": "node tests/live.mjs",
+    "sync:main": "node scripts/sync-main.mjs"
   },
   "devDependencies": {
     "jsdom": "^25.0.1",

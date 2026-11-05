@@ -24,10 +24,13 @@ jobs:
       - name: Bundle is committed up to date
         run: git diff --exit-code -- lib/client.js
 
+      # The suites live on the `dev` branch; `main` ships without tests/.
       - name: Host and model suites
+        if: hashFiles('tests/**') != ''
         run: npm test
 
       - name: DOM end-to-end suite
+        if: hashFiles('tests/**') != ''
         run: npm run test:gui
 
       - name: Published tarball ships no dev-only files

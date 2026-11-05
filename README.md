@@ -125,6 +125,9 @@ node --check lib/client.js
 
 ## Verification
 
+The suites below live in `tests/` on the **`dev` branch**. The `main` branch — what GitHub shows and
+what the plugin hub installs — ships without them, and the npm tarball never includes them either.
+
 | Suite | Covers | Checks |
 | --- | --- | --- |
 | `tests/smoke.mjs` | model readers/mutators, markdown rendering, search ranking, store seed/save | 13 |
@@ -148,18 +151,28 @@ node --check lib/client.js
 
 245 checks in total (216 node suites, 10 jsdom GUI, 10 adversarial, 9 live).
 
-Tests are development-only: they stay in this repository for local runs and CI and are never
-included in the npm tarball. Run them from a checkout:
+The suites live in `tests/` on the **dev** branch. `main` — what GitHub shows, what the hub
+installs and what npm publishes — is `dev` minus `tests/`, so a plain checkout of `main` contains
+no test code. Tests are never in the npm tarball either.
 
 ```
-npm install         # jsdom + react for the DOM suites
-npm test            # the fifteen node suites above
-npm run test:battle # adversarial suite only
-npm run test:gui    # real DOM end to end
-npm run test:live   # against the running GUI
+git switch dev        # or: git fetch origin dev && git switch dev
+npm install           # jsdom + react for the DOM suites
+npm test              # the fifteen node suites above
+npm run test:battle   # adversarial suite only
+npm run test:gui      # real DOM end to end
+npm run test:live     # against the running GUI
 ```
 
 `tests/live.mjs` reads the GUI URL from `DSH_WEB_URL` (it defaults to the current harness port).
+
+To release, rebuild `main` from `dev` (the script copies `dev`'s tree, drops `tests/`, and refuses
+when `main` has commits of its own, i.e. someone edited the release branch directly):
+
+```
+npm run sync:main
+git push origin main dev --tags
+```
 
 ## Limitations
 

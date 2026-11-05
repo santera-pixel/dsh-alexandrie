@@ -60,8 +60,14 @@ async function api(path, options = {}) {
     throw new Error(`scriptorium: ${path}: response was not JSON (HTTP ${response.status})`)
   }
   if (!response.ok || payload === null || payload.ok !== true) {
-    const message = (payload && payload.error && payload.error.message) || `HTTP ${response.status}`
-    throw new Error(message)
+    const detail = payload !== null && typeof payload === 'object' && payload.error !== null && typeof payload.error === 'object' ? payload.error : {}
+    const error = new Error(detail.message || `HTTP ${response.status}`)
+    // The machine-readable half of the envelope survives on the error: the store tells a
+    // revision conflict (409) apart from a failed write without parsing the message.
+    error.status = response.status
+    error.code = typeof detail.code === 'string' ? detail.code : null
+    error.currentRevision = typeof detail.currentRevision === 'number' ? detail.currentRevision : null
+    throw error
   }
   return payload.value
 }

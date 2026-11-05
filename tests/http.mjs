@@ -4,7 +4,7 @@
 
 import assert from 'node:assert/strict'
 import http from 'node:http'
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { apply } from '../lib/index.js'
@@ -333,6 +333,66 @@ check('media paths reject ids that are not plain identifiers', async () => {
   const result = await request('/media/..%2F..%2Fdata.json')
   assert.equal(result.status, 400)
   assert.equal(result.json.ok, false)
+})
+
+// ---------- optimistic concurrency: expectedRevision / 409 conflict ----------
+const dataFile = join(home, 'scriptorium', 'data.json')
+const saveBody = (payload) => ({ method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) })
+
+check('two sequential saves with the matching expectedRevision both land', async () => {
+  const state = await request('/state')
+  const base = state.json.value.revision
+  const first = await request('/save', saveBody({ snapshot, expectedRevision: base }))
+  assert.equal(first.status, 200)
+  assert.equal(first.json.value.revision, base + 1)
+  assert.equal(first.json.value.warning, null)
+  const second = await request('/save', saveBody({ snapshot, expectedRevision: base + 1 }))
+  assert.equal(second.status, 200)
+  assert.equal(second.json.value.revision, base + 2)
+})
+
+check('a stale expectedRevision gets 409, names the current revision and writes nothing', async () => {
+  const state = await request('/state')
+  const current = state.json.value.revision
+  const before = await readFile(dataFile, 'utf8')
+  const stale = await request('/save', saveBody({ snapshot, expectedRevision: current - 1 }))
+  assert.equal(stale.status, 409)
+  assert.equal(stale.json.ok, false)
+  assert.equal(stale.json.error.code, 'conflict')
+  assert.equal(stale.json.error.currentRevision, current)
+  const after = await readFile(dataFile, 'utf8')
+  assert.equal(after, before, 'a refused save must not touch data.json')
+  const unchanged = await request('/state')
+  assert.equal(unchanged.json.value.revision, current)
+})
+
+check('a save without expectedRevision is accepted once, with a compatibility warning', async () => {
+  const result = await request('/save', saveBody({ snapshot }))
+  assert.equal(result.status, 200)
+  assert.equal(typeof result.json.value.revision, 'number')
+  assert.match(String(result.json.value.warning), /expectedRevision/)
+})
+
+check('a malformed expectedRevision is rejected with 400 and writes nothing', async () => {
+  const before = (await request('/state')).json.value.revision
+  const result = await request('/save', saveBody({ snapshot, expectedRevision: 'not-a-revision' }))
+  assert.equal(result.status, 400)
+  assert.match(result.json.error.message, /expectedRevision/)
+  assert.equal((await request('/state')).json.value.revision, before)
+})
+
+check('two simultaneous saves on the same revision: exactly one wins, the other 409s', async () => {
+  const current = (await request('/state')).json.value.revision
+  const [left, right] = await Promise.all([
+    request('/save', saveBody({ snapshot, expectedRevision: current })),
+    request('/save', saveBody({ snapshot, expectedRevision: current })),
+  ])
+  assert.deepEqual([left.status, right.status].sort(), [200, 409])
+  const winner = left.status === 200 ? left : right
+  const loser = left.status === 409 ? left : right
+  assert.equal(winner.json.value.revision, current + 1)
+  assert.equal(loser.json.error.currentRevision, current + 1)
+  assert.equal((await request('/state')).json.value.revision, current + 1)
 })
 
 for (const run of pending) await run()

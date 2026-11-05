@@ -358,6 +358,96 @@ check('the mind graph maps the notes and can create a new connection', async () 
   await waitFor(() => qa('.dsh-scr-graph-node.is-dim').length > 0, 2000, 'non-matching nodes dim')
 })
 
+// ---------- save conflict (409): banner, paused autosave, Reload and Overwrite ----------
+const externalSave = (body) =>
+  realFetch(baseUrl + '/dsh-scriptorium/save', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+
+check('a stale save raises the conflict banner, pauses autosave and Reload takes the host copy', async () => {
+  click(byText('.dsh-scr-seg-btn', 'Documents'))
+  await delay(250)
+  if (!q('.dsh-scr-textarea')) {
+    const row = await waitFor(() => qa('.dsh-scr-list-row').find((el) => (el.textContent || '').includes('GUI smoke test')), 4000, 'document row')
+    click(row)
+  }
+  const textarea = await waitFor(() => q('.dsh-scr-textarea'), 4000, 'editor textarea')
+
+  // Let the panel settle so its revision matches the host, then let another session write.
+  await delay(1300)
+  const before = await hostState()
+  const foreign = await externalSave({ snapshot: before.snapshot, expectedRevision: before.revision })
+  assert.equal(foreign.status, 200, 'the other session saved first')
+  const hostAfterForeign = await hostState()
+  assert.equal(hostAfterForeign.revision, before.revision + 1)
+
+  type(textarea, '# local edit that lost the race\n')
+  const banner = await waitFor(() => q('.dsh-scr-root .dsh-scr-conflict'), 6000, 'conflict banner')
+  assert.ok(banner.textContent.includes('Overwrite'), 'banner offers Overwrite')
+  assert.ok(banner.textContent.includes('Reload'), 'banner offers Reload')
+  assert.equal(banner.getAttribute('data-current-revision'), String(hostAfterForeign.revision), 'banner names the host revision')
+  await waitFor(() => text().includes('resolve conflict'), 3000, 'save indicator shows the conflict')
+
+  // Autosave is paused: more typing must not reach the host while the banner is open.
+  type(textarea, '# typed while paused\n')
+  await delay(1600)
+  const paused = await hostState()
+  assert.equal(paused.revision, hostAfterForeign.revision, 'nothing was written while the conflict is open')
+  assert.equal(docsOf(paused).find((node) => node.title === 'GUI smoke test').content.includes('typed while paused'), false)
+
+  // Escape dismisses the banner, a pill keeps the conflict reachable, Resolve reopens it.
+  press(null, 'Escape')
+  await waitFor(() => q('.dsh-scr-conflict') === null, 2000, 'banner dismissed with Escape')
+  await waitFor(() => q('.dsh-scr-conflict-pill'), 2000, 'conflict pill')
+  click(byText('.dsh-scr-conflict-pill button', 'Resolve'))
+  await waitFor(() => q('.dsh-scr-conflict'), 2000, 'banner reopened from the pill')
+
+  // Reload takes the host copy, drops the local text and resumes autosave.
+  click(byText('.dsh-scr-conflict button', 'Reload'))
+  await waitFor(() => q('.dsh-scr-conflict') === null, 4000, 'conflict resolved by reload')
+  const hostCopy = docsOf(await hostState()).find((node) => node.title === 'GUI smoke test')
+  await waitFor(() => q('.dsh-scr-textarea') && q('.dsh-scr-textarea').value === hostCopy.content, 4000, 'editor shows the host copy')
+  assert.ok(!q('.dsh-scr-textarea').value.includes('typed while paused'), 'Reload dropped the local edits')
+})
+
+check('Overwrite retries once, re-arms the banner on a second conflict and then replaces the host copy', async () => {
+  await delay(1300)
+  const base = await hostState()
+  const foreign = await externalSave({ snapshot: base.snapshot, expectedRevision: base.revision })
+  assert.equal(foreign.status, 200)
+
+  type(q('.dsh-scr-textarea'), '# overwrite wins\n')
+  const banner = await waitFor(() => q('.dsh-scr-conflict'), 6000, 'second conflict banner')
+  assert.equal(banner.getAttribute('data-current-revision'), String(base.revision + 1))
+
+  // The host moves again while the banner is open.
+  const again = await externalSave({ snapshot: base.snapshot, expectedRevision: base.revision + 1 })
+  assert.equal(again.status, 200)
+  assert.equal((await hostState()).revision, base.revision + 2)
+
+  // First Overwrite click retries once against the revision the banner named: still stale,
+  // so the banner re-arms instead of looping, and nothing is written.
+  click(byText('.dsh-scr-conflict button', 'Overwrite'))
+  await waitFor(
+    () => q('.dsh-scr-conflict') && q('.dsh-scr-conflict').getAttribute('data-current-revision') === String(base.revision + 2),
+    4000,
+    'banner re-armed with the newer revision',
+  )
+  assert.equal((await hostState()).revision, base.revision + 2, 'the failed retry wrote nothing')
+
+  // A fresh click retries against the newer revision and wins.
+  click(byText('.dsh-scr-conflict button', 'Overwrite'))
+  await waitFor(() => q('.dsh-scr-conflict') === null, 4000, 'conflict resolved by overwrite')
+  const after = await hostState()
+  assert.equal(after.revision, base.revision + 3, 'exactly one write came out of the overwrite')
+  const doc = docsOf(after).find((node) => node.title === 'GUI smoke test')
+  assert.ok(doc.content.includes('overwrite wins'), 'the local snapshot replaced the host copy')
+  await delay(1400)
+  assert.equal((await hostState()).revision, base.revision + 3, 'autosave resumed without extra writes')
+})
+
 for (const run of pending) await run()
 
 root.unmount()

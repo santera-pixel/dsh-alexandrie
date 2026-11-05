@@ -211,6 +211,12 @@ npm run sync:main
 git push origin main dev --tags
 ```
 
+Tag only after the `dev` CI run is green. `release-gate.yml` rejects a release whose tree is not
+exactly `dev` minus `tests/`, or whose `dev` CI run did not succeed, and `release.yml` restores the
+`tests/` from `dev` into the tag checkout and re-runs `npm test`, `npm run test:battle` and
+`npm run test:gui`. A tag can therefore fail even when `main` itself looked fine — the suite, not
+the branch colour, decides whether the release is sound.
+
 ## Limitations
 
 - The GUI shell answers `401` to plain HTTP without a browser session, so visual end-to-end

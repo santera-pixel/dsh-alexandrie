@@ -29,3 +29,19 @@ jobs:
 
       - name: DOM end-to-end suite
         run: npm run test:gui
+
+      - name: Published tarball ships no dev-only files
+        run: |
+          npm pack --dry-run --json --ignore-scripts --silent > pack.json
+          node -e "
+            const [p] = require('./pack.json');
+            const devOnly = p.files
+              .map(f => f.path)
+              .filter(f => /^(tests|node_modules)\//.test(f) || /\.tgz$/.test(f));
+            if (devOnly.length) {
+              console.error('dev-only files leaked into the tarball:', devOnly.join(', '));
+              process.exit(1);
+            }
+            console.log('tarball ok:', p.files.length, 'files, no tests');
+          "
+          rm pack.json

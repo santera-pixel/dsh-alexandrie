@@ -148,7 +148,8 @@ node --check lib/client.js
 
 245 checks in total (216 node suites, 10 jsdom GUI, 10 adversarial, 9 live).
 
-Run everything from a checkout (the tests are not part of the npm tarball):
+Tests are development-only: they stay in this repository for local runs and CI and are never
+included in the npm tarball. Run them from a checkout:
 
 ```
 npm install         # jsdom + react for the DOM suites

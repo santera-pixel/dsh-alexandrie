@@ -151,9 +151,31 @@ function matchSegments(text, query) {
   return segments.length === 0 ? [{ text: source, hit: false }] : segments
 }
 
+/**
+ * Markdown syntax stripped for one-line previews (board cards, search snippets): a card should
+ * read like the note, not like its source. Links keep their label, headings lose the hashes,
+ * tables and callout fences collapse to spaces.
+ */
+function plainExcerpt(text) {
+  return String(text || '')
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+    .replace(/\[\[([^\]]+)\]\]/g, '$1')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/^\s*:::\s*\w*.*$/gm, ' ')
+    .replace(/^\s{0,3}#{1,6}\s+/gm, '')
+    .replace(/^\s{0,3}>\s?/gm, '')
+    .replace(/^\s*\|?[\s:|-]{6,}\|?\s*$/gm, ' ')
+    .replace(/^\s*(?:[-*+]|\d+\.)\s+(?:\[[ xX]\]\s+)?/gm, '')
+    .replace(/\|/g, ' ')
+    .replace(/(\*\*|__|~~|`)/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 /** Snippet with a little surrounding context, used by the search results list. */
 function excerptFor(text, query, radius = 90) {
-  const source = String(text || '').replace(/\s+/g, ' ').trim()
+  const source = plainExcerpt(text)
   const needle = String(query || '').trim()
   if (needle === '' || source === '') return source.slice(0, radius)
   const found = source.toLowerCase().indexOf(needle.toLowerCase())

@@ -405,7 +405,8 @@ function axlPaletteGroups(commands) {
 function axlPaletteIcon(icon) {
   if (icon === undefined || icon === null || icon === false) return null
   if (typeof icon === 'string') {
-    return h('span', { className: 'dsh-axl-palette-icon', 'aria-hidden': 'true' }, icon)
+    const known = Object.prototype.hasOwnProperty.call(ICONS, icon)
+    return h('span', { className: 'dsh-axl-palette-icon', 'aria-hidden': 'true' }, known ? h(Icon, { name: icon, size: 15 }) : icon)
   }
   if (typeof icon === 'function') {
     return h('span', { className: 'dsh-axl-palette-icon', 'aria-hidden': 'true' }, h(icon, { size: 15 }))

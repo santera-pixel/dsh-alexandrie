@@ -4,12 +4,34 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Topic: dsh-plugin](https://img.shields.io/badge/topic-dsh--plugin-0e7490)](https://github.com/topics/dsh-plugin)
 
+<img src="docs/media/hero.png" alt="Alexandrie: a project notebook inside the DeepSeek Harness — notes, screenshots, a canvas and a mind graph in one panel" width="100%">
+
 An Alexandrie-style knowledge base inside the DeepSeek Harness Web GUI: project-based workspaces,
 nested documents, a Markdown editor with live preview, full-text search, a command palette, a
 kanban board, a free-form media canvas, an Obsidian-style mind graph, tags, favourites, trash and
 ZIP/JSON archives — all stored in one JSON file on the host that this plugin owns.
 
 The panel lives in the sidebar (book icon, "Alexandrie"). Everything else is one keystroke away.
+
+## What it looks like
+
+| | |
+| --- | --- |
+| <img src="docs/media/workspace.png" alt="Documents view: note tree on the left, Markdown editor and live preview in the middle"> | <img src="docs/media/media.png" alt="Media sandbox: every attachment in the project as a preview card"> |
+| **Documents** — nested notes, split editor and a live preview, tags and status in the header. | **Media sandbox** — every screenshot, PDF and clip in the project, filterable by kind. |
+| <img src="docs/media/canvas.png" alt="Media canvas: attachment cards arranged beside the notes that own them, joined by edges"> | <img src="docs/media/graph.png" alt="Mind graph: notes as nodes and wiki links as edges, auto-fitted to the panel"> |
+| **Canvas** — attachments become cards beside the note that owns them, joined by an edge. | **Mind graph** — notes are nodes, `[[wiki links]]` are edges; opens fitted to the panel. |
+| <img src="docs/media/board.png" alt="Board view: draft, active and done columns built from note statuses"> | <img src="docs/media/search.png" alt="Command palette: fuzzy list of every action, grouped by Create, Projects, Navigate and Data"> |
+| **Board** — Draft / Active / Done, straight from each note's status. | **Command palette** — `Ctrl+K`, every action one fuzzy query away. |
+
+**In practice:**
+
+- A design review: drop three screenshots on the note, arrange them on the canvas next to the
+  brief, link them, and the graph shows which notes reference which.
+- A release: every note carries a status, so the board is the plan — drag a card and the note's
+  status changes on disk.
+- A month later: `Ctrl+K` or search finds the note, the graph shows its neighbours, and the
+  attachment is still next to the paragraph it explains.
 
 ## What you get
 

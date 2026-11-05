@@ -393,6 +393,18 @@ function MindGraph(props) {
     }
   }, [signature])
 
+  // The layout is origin-centred, so without this the first paint anchors the ring at the
+  // viewport's top-left corner and half the notes start off-screen. Re-fit whenever the graph
+  // shape or the measured size changes, and once more when the simulation settles.
+  React.useEffect(() => {
+    setView(graphFit(graph, positionsRef.current, size))
+  }, [signature, size.w, size.h])
+
+  React.useEffect(() => {
+    if (settling) return
+    setView(graphFit(graph, positionsRef.current, size))
+  }, [settling])
+
   React.useEffect(() => {
     const element = containerRef.current
     if (element === null) return undefined

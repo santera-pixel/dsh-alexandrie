@@ -36,6 +36,7 @@
     "test:battle": "node tests/battle.mjs",
     "test:gui": "node tests/gui.mjs",
     "test:live": "node tests/live.mjs",
+    "shots": "node tests/shots.mjs",
     "sync:main": "node scripts/sync-main.mjs"
   },
   "devDependencies": {

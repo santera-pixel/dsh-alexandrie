@@ -58,7 +58,8 @@ if (strayCommits.length) {
 
 // Index and worktree become dev's tree; tracked files that dev removed vanish.
 git(['read-tree', '--reset', '-u', 'dev']);
-git(['rm', '-r', '-q', '--ignore-unmatch', 'tests']);
+// tests/ is staged as "added" by read-tree, so the removal has to be forced.
+git(['rm', '-r', '-q', '-f', '--ignore-unmatch', 'tests']);
 
 const staged = git(['status', '--porcelain']);
 if (!staged) {

@@ -269,7 +269,7 @@ function CanvasCard({ row, style, selected, linkSource, linkMode, onPointerDown,
     'div',
     {
       className: cx(
-        'dsh-axl-canvas-card',
+        'dsh-scr-canvas-card',
         selected && 'is-selected',
         linkSource && 'is-link-source',
         linkMode && 'is-linkable',
@@ -286,30 +286,30 @@ function CanvasCard({ row, style, selected, linkSource, linkMode, onPointerDown,
     },
     h(
       'div',
-      { className: 'dsh-axl-canvas-cardbody' },
+      { className: 'dsh-scr-canvas-cardbody' },
       kind === 'media' && mediaKindOf(media) === 'image'
-        ? h('img', { className: 'dsh-axl-canvas-thumb', src: mediaUrl(media), alt: title, draggable: false, loading: 'lazy' })
+        ? h('img', { className: 'dsh-scr-canvas-thumb', src: mediaUrl(media), alt: title, draggable: false, loading: 'lazy' })
         : h(
             'div',
-            { className: cx('dsh-axl-canvas-placeholder', 'is-' + (kind === 'doc' ? 'doc' : mediaKindOf(media))) },
+            { className: cx('dsh-scr-canvas-placeholder', 'is-' + (kind === 'doc' ? 'doc' : mediaKindOf(media))) },
             h(Icon, { name: kind === 'doc' ? row.node.icon || 'doc' : mediaIconOf(media), size: 30 }),
           ),
       h(
         'div',
-        { className: 'dsh-axl-canvas-caption' },
-        h('div', { className: 'dsh-axl-canvas-title', title }, title),
-        h('div', { className: 'dsh-axl-canvas-sub' }, subtitle),
+        { className: 'dsh-scr-canvas-caption' },
+        h('div', { className: 'dsh-scr-canvas-title', title }, title),
+        h('div', { className: 'dsh-scr-canvas-sub' }, subtitle),
       ),
     ),
     h(
       'div',
-      { className: 'dsh-axl-canvas-cardfoot' },
+      { className: 'dsh-scr-canvas-cardfoot' },
       kind === 'media'
         ? h(
             'button',
             {
               type: 'button',
-              className: 'dsh-axl-canvas-owner',
+              className: 'dsh-scr-canvas-owner',
               title: 'Open the document this attachment belongs to',
               onClick: (event) => {
                 event.stopPropagation()
@@ -319,15 +319,15 @@ function CanvasCard({ row, style, selected, linkSource, linkMode, onPointerDown,
             h(Icon, { name: 'doc', size: 11 }),
             row.node ? row.node.title : 'Unknown document',
           )
-        : h('span', { className: 'dsh-axl-canvas-owner is-static' }, h(Icon, { name: 'doc', size: 11 }), 'Document'),
-      h('span', { className: 'dsh-axl-canvas-spacer' }),
+        : h('span', { className: 'dsh-scr-canvas-owner is-static' }, h(Icon, { name: 'doc', size: 11 }), 'Document'),
+      h('span', { className: 'dsh-scr-canvas-spacer' }),
       kind === 'media'
         ? h(IconButton, { icon: 'eye', label: 'Preview ' + title, size: 13, onClick: (event) => { event.stopPropagation(); onPreview(media) } })
         : h(IconButton, { icon: 'arrowRight', label: 'Open ' + title, size: 13, onClick: (event) => { event.stopPropagation(); onOpen(row.node.id) } }),
       h(IconButton, { icon: 'link', label: 'Link from ' + title, size: 13, active: linkSource, onClick: (event) => { event.stopPropagation(); onStartLink(row.item.id) } }),
       h(IconButton, { icon: 'close', label: 'Remove from canvas', size: 13, danger: true, onClick: (event) => { event.stopPropagation(); onRemove(row.item.id) } }),
     ),
-    h('span', { className: 'dsh-axl-canvas-resize', title: 'Resize', onMouseDown: onResize }),
+    h('span', { className: 'dsh-scr-canvas-resize', title: 'Resize', onMouseDown: onResize }),
   )
 }
 
@@ -459,7 +459,7 @@ function MediaCanvas(props) {
     if (event.button !== 0) return
     const target = event.target
     if (linkMode) return
-    if (target && typeof target.closest === 'function' && target.closest('button, a, input, select, textarea, .dsh-axl-canvas-resize')) return
+    if (target && typeof target.closest === 'function' && target.closest('button, a, input, select, textarea, .dsh-scr-canvas-resize')) return
     event.preventDefault()
     event.stopPropagation()
     if (rootRef.current !== null && typeof rootRef.current.focus === 'function') rootRef.current.focus()
@@ -529,7 +529,7 @@ function MediaCanvas(props) {
   const onBackgroundDown = (event) => {
     if (event.button !== 0) return
     const target = event.target
-    if (target && typeof target.closest === 'function' && target.closest('.dsh-axl-canvas-card, .dsh-axl-canvas-toolbar, .dsh-axl-canvas-edgehit, button, select, input')) return
+    if (target && typeof target.closest === 'function' && target.closest('.dsh-scr-canvas-card, .dsh-scr-canvas-toolbar, .dsh-scr-canvas-edgehit, button, select, input')) return
     if (linkMode) {
       setLinkFrom(null)
       return
@@ -622,27 +622,27 @@ function MediaCanvas(props) {
   const linkCount = links.length
   return h(
     'div',
-    { className: 'dsh-axl-canvas', ref: rootRef, tabIndex: 0, onKeyDown, role: 'application', 'aria-label': 'Media canvas' },
+    { className: 'dsh-scr-canvas', ref: rootRef, tabIndex: 0, onKeyDown, role: 'application', 'aria-label': 'Media canvas' },
     h(
       'div',
-      { className: 'dsh-axl-canvas-toolbar' },
+      { className: 'dsh-scr-canvas-toolbar' },
       h(
         'span',
-        { className: 'dsh-axl-canvas-badge' },
+        { className: 'dsh-scr-canvas-badge' },
         h(Icon, { name: 'canvas', size: 14 }),
         rows.length + ' card(s)',
       ),
       h(
         'span',
-        { className: 'dsh-axl-canvas-badge is-quiet' },
+        { className: 'dsh-scr-canvas-badge is-quiet' },
         linkCount + ' link(s)',
         hint ? ' · ' + hint : '',
       ),
-      h('span', { className: 'dsh-axl-canvas-spacer' }),
+      h('span', { className: 'dsh-scr-canvas-spacer' }),
       h(
         'select',
         {
-          className: 'dsh-axl-canvas-select',
+          className: 'dsh-scr-canvas-select',
           value: '',
           title: 'Add a document to the canvas',
           onChange: (event) => {
@@ -654,33 +654,33 @@ function MediaCanvas(props) {
           docs.map((node) => h('option', { value: node.id, key: node.id }, node.title)),
         ),
       ),
-      h('button', { type: 'button', className: 'dsh-axl-btn is-ghost', title: 'Place every attachment from this workspace', onClick: syncMedia }, h(Icon, { name: 'refresh', size: 13 }), 'Sync media'),
+      h('button', { type: 'button', className: 'dsh-scr-btn is-ghost', title: 'Place every attachment from this workspace', onClick: syncMedia }, h(Icon, { name: 'refresh', size: 13 }), 'Sync media'),
       h(IconButton, { icon: 'link', label: 'Link two cards', active: linkMode, onClick: () => { setLinkMode((value) => !value); setLinkFrom(null) } }),
-      h('span', { className: 'dsh-axl-canvas-sep' }),
+      h('span', { className: 'dsh-scr-canvas-sep' }),
       h(IconButton, { icon: 'minus', label: 'Zoom out', onClick: () => zoomBy(1 / 1.2) }),
-      h('span', { className: 'dsh-axl-canvas-zoom' }, Math.round(view.zoom * 100) + '%'),
+      h('span', { className: 'dsh-scr-canvas-zoom' }, Math.round(view.zoom * 100) + '%'),
       h(IconButton, { icon: 'plus', label: 'Zoom in', onClick: () => zoomBy(1.2) }),
       h(IconButton, { icon: 'fit', label: 'Fit all cards', onClick: fit }),
-      h('button', { type: 'button', className: 'dsh-axl-btn is-ghost', onClick: reset }, '100%'),
+      h('button', { type: 'button', className: 'dsh-scr-btn is-ghost', onClick: reset }, '100%'),
       h(IconButton, { icon: 'trash', label: 'Remove selection', danger: true, disabled: selected === null && selectedLink === null, onClick: removeSelected }),
     ),
     hint !== null
-      ? h('div', { className: 'dsh-axl-canvas-note', role: 'status' }, hint, h('button', { type: 'button', className: 'dsh-axl-canvas-notebtn', onClick: () => setHint(null) }, 'Dismiss'))
+      ? h('div', { className: 'dsh-scr-canvas-note', role: 'status' }, hint, h('button', { type: 'button', className: 'dsh-scr-canvas-notebtn', onClick: () => setHint(null) }, 'Dismiss'))
       : null,
     h(
       'div',
       {
-        className: cx('dsh-axl-canvas-viewport', linkMode && 'is-linking'),
+        className: cx('dsh-scr-canvas-viewport', linkMode && 'is-linking'),
         ref: viewportRef,
         onMouseDown: onBackgroundDown,
         style: { backgroundSize: Math.max(12, Math.round(26 * view.zoom)) + 'px ' + Math.max(12, Math.round(26 * view.zoom)) + 'px', backgroundPosition: view.x + 'px ' + view.y + 'px' },
       },
       h(
         'div',
-        { className: 'dsh-axl-canvas-stage', style: { transform: 'translate(' + view.x + 'px, ' + view.y + 'px) scale(' + view.zoom + ')' } },
+        { className: 'dsh-scr-canvas-stage', style: { transform: 'translate(' + view.x + 'px, ' + view.y + 'px) scale(' + view.zoom + ')' } },
         h(
           'svg',
-          { className: 'dsh-axl-canvas-edges', width: 1, height: 1, 'aria-hidden': 'true' },
+          { className: 'dsh-scr-canvas-edges', width: 1, height: 1, 'aria-hidden': 'true' },
           links.map((link) => {
             const left = rectOf(link.from)
             const right = rectOf(link.to)
@@ -689,9 +689,9 @@ function MediaCanvas(props) {
             const active = selectedLink === link.id
             return h(
               'g',
-              { key: link.id, className: cx('dsh-axl-canvas-edgegroup', active && 'is-selected') },
+              { key: link.id, className: cx('dsh-scr-canvas-edgegroup', active && 'is-selected') },
               h('path', {
-                className: 'dsh-axl-canvas-edgehit',
+                className: 'dsh-scr-canvas-edgehit',
                 d,
                 onMouseDown: (event) => {
                   event.stopPropagation()
@@ -699,7 +699,7 @@ function MediaCanvas(props) {
                   setSelected(null)
                 },
               }),
-              h('path', { className: cx('dsh-axl-canvas-edge', active && 'is-selected'), d }),
+              h('path', { className: cx('dsh-scr-canvas-edge', active && 'is-selected'), d }),
             )
           }),
         ),
@@ -734,22 +734,22 @@ function MediaCanvas(props) {
       rows.length === 0
         ? h(
             'div',
-            { className: 'dsh-axl-canvas-emptystate' },
+            { className: 'dsh-scr-canvas-emptystate' },
             h(Icon, { name: 'canvas', size: 26 }),
             h('strong', null, 'Your media canvas is empty'),
             h('span', null, 'Attach files to a document from its editor, then press "Sync media" — each image lands here beside its document.'),
-            h('button', { type: 'button', className: 'dsh-axl-btn is-primary', onClick: syncMedia }, h(Icon, { name: 'refresh', size: 13 }), 'Sync media'),
+            h('button', { type: 'button', className: 'dsh-scr-btn is-primary', onClick: syncMedia }, h(Icon, { name: 'refresh', size: 13 }), 'Sync media'),
           )
         : null,
       linkMode
-        ? h('div', { className: 'dsh-axl-canvas-hintbar' }, linkFrom === null ? 'Pick the first card to connect' : 'Now pick the card to connect it to · Esc to cancel')
+        ? h('div', { className: 'dsh-scr-canvas-hintbar' }, linkFrom === null ? 'Pick the first card to connect' : 'Now pick the card to connect it to · Esc to cancel')
         : null,
       selectedLink !== null
         ? h(
             'div',
-            { className: 'dsh-axl-canvas-hintbar is-active' },
+            { className: 'dsh-scr-canvas-hintbar is-active' },
             'Link selected · press Delete to remove it',
-            h('button', { type: 'button', className: 'dsh-axl-btn is-danger is-small', onClick: removeSelected }, 'Delete link'),
+            h('button', { type: 'button', className: 'dsh-scr-btn is-danger is-small', onClick: removeSelected }, 'Delete link'),
           )
         : null,
     ),
@@ -757,50 +757,50 @@ function MediaCanvas(props) {
 }
 
 const CANVAS_CSS = `
-.dsh-axl-canvas { display: flex; flex-direction: column; height: 100%; min-height: 460px; outline: none; position: relative; }
-.dsh-axl-canvas-toolbar { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--dsw-alias-border-l1); background: color-mix(in srgb, var(--dsw-alias-bg-base) 92%, var(--dsw-alias-bg-layer-1)); flex-wrap: wrap; }
-.dsh-axl-canvas-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 600; color: var(--dsw-alias-label-secondary); }
-.dsh-axl-canvas-badge.is-quiet { font-weight: 500; opacity: .85; }
-.dsh-axl-canvas-spacer { flex: 1 1 auto; }
-.dsh-axl-canvas-sep { width: 1px; height: 18px; margin: 0 4px; background: var(--dsw-alias-border-l1); }
-.dsh-axl-canvas-zoom { min-width: 40px; text-align: center; font-size: 11px; font-variant-numeric: tabular-nums; color: var(--dsw-alias-label-secondary); }
-.dsh-axl-canvas-select { max-width: 190px; height: 28px; border-radius: 8px; border: 1px solid var(--dsw-alias-border-l1); background: var(--dsw-alias-bg-base); color: var(--dsw-alias-label-primary); font-size: 12px; padding: 0 8px; }
-.dsh-axl-canvas-note { display: flex; align-items: center; gap: 10px; padding: 6px 14px; font-size: 11.5px; color: var(--dsw-alias-label-secondary); background: color-mix(in srgb, var(--dsw-alias-brand-primary) 8%, transparent); border-bottom: 1px solid var(--dsw-alias-border-l1); }
-.dsh-axl-canvas-notebtn { border: 0; background: transparent; color: var(--dsw-alias-brand-primary); font-size: 11.5px; font-weight: 600; cursor: pointer; }
-.dsh-axl-canvas-viewport { position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden; cursor: grab; background-color: var(--dsw-alias-bg-base); background-image: radial-gradient(color-mix(in srgb, var(--dsw-alias-label-primary) 16%, transparent) 1px, transparent 1px); background-size: 22px 22px; background-position: -1px -1px; }
-.dsh-axl-canvas-viewport:active { cursor: grabbing; }
-.dsh-axl-canvas-viewport.is-linking { cursor: crosshair; }
-.dsh-axl-canvas-stage { position: absolute; inset: 0; transform-origin: 0 0; }
-.dsh-axl-canvas-edges { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
-.dsh-axl-canvas-edge { fill: none; stroke: color-mix(in srgb, var(--dsw-alias-label-secondary) 48%, transparent); stroke-width: 1.6; transition: stroke .16s ease; }
-.dsh-axl-canvas-edge.is-selected { stroke: var(--dsw-alias-brand-primary); stroke-width: 2.4; }
-.dsh-axl-canvas-edgehit { fill: none; stroke: transparent; stroke-width: 20; pointer-events: stroke; cursor: pointer; }
-.dsh-axl-canvas-card { position: absolute; display: flex; flex-direction: column; border-radius: 12px; border: 1px solid var(--dsw-alias-border-l1); background: var(--dsw-alias-bg-layer-1); box-shadow: 0 8px 22px color-mix(in srgb, var(--dsw-alias-label-primary) 12%, transparent); overflow: hidden; cursor: grab; transition: box-shadow .16s ease, border-color .16s ease; animation: dsh-axl-canvas-in .26s cubic-bezier(.22,.61,.36,1) both; }
-.dsh-axl-canvas-card:hover { border-color: var(--dsw-alias-border-l2); box-shadow: 0 12px 28px color-mix(in srgb, var(--dsw-alias-label-primary) 18%, transparent); }
-.dsh-axl-canvas-card.is-selected { border-color: var(--dsw-alias-brand-primary); box-shadow: 0 0 0 2px color-mix(in srgb, var(--dsw-alias-brand-primary) 40%, transparent), 0 12px 28px color-mix(in srgb, var(--dsw-alias-label-primary) 18%, transparent); }
-.dsh-axl-canvas-card:focus-visible { outline: 2px solid var(--dsw-alias-brand-primary); outline-offset: 2px; }
-.dsh-axl-canvas-card.is-linkable { cursor: crosshair; }
-.dsh-axl-canvas-card.is-link-source { box-shadow: 0 0 0 2px var(--dsw-alias-brand-primary), 0 0 0 6px color-mix(in srgb, var(--dsw-alias-brand-primary) 18%, transparent); }
-.dsh-axl-canvas-cardbody { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
-.dsh-axl-canvas-thumb { width: 100%; flex: 1 1 auto; min-height: 0; object-fit: cover; display: block; pointer-events: none; background: var(--dsw-alias-bg-layer-2); }
-.dsh-axl-canvas-placeholder { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; color: var(--dsw-alias-label-secondary); background: linear-gradient(140deg, color-mix(in srgb, var(--dsw-alias-brand-primary) 10%, transparent), var(--dsw-alias-bg-layer-2)); }
-.dsh-axl-canvas-placeholder.is-doc { color: var(--dsw-alias-brand-primary); }
-.dsh-axl-canvas-caption { padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; background: var(--dsw-alias-bg-layer-1); border-top: 1px solid var(--dsw-alias-border-l1); }
-.dsh-axl-canvas-title { font-size: 12px; font-weight: 600; color: var(--dsw-alias-label-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dsh-axl-canvas-sub { font-size: 10.5px; color: var(--dsw-alias-label-secondary); }
-.dsh-axl-canvas-cardfoot { display: flex; align-items: center; gap: 2px; padding: 3px 4px 3px 6px; border-top: 1px solid var(--dsw-alias-border-l1); background: var(--dsw-alias-bg-base); }
-.dsh-axl-canvas-owner { display: inline-flex; align-items: center; gap: 4px; max-width: 62%; border: 0; background: transparent; color: var(--dsw-alias-label-secondary); font-size: 10.5px; cursor: pointer; padding: 2px 4px; border-radius: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dsh-axl-canvas-owner:hover { color: var(--dsw-alias-brand-primary); background: color-mix(in srgb, var(--dsw-alias-brand-primary) 10%, transparent); }
-.dsh-axl-canvas-owner.is-static { cursor: default; }
-.dsh-axl-canvas-resize { position: absolute; right: -1px; bottom: -1px; width: 16px; height: 16px; cursor: nwse-resize; background: linear-gradient(135deg, transparent 46%, color-mix(in srgb, var(--dsw-alias-label-secondary) 55%, transparent) 47%, transparent 58%, color-mix(in srgb, var(--dsw-alias-label-secondary) 55%, transparent) 59%, transparent 70%); }
-.dsh-axl-canvas-emptystate { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; padding: 24px; color: var(--dsw-alias-label-secondary); pointer-events: none; }
-.dsh-axl-canvas-emptystate strong { color: var(--dsw-alias-label-primary); font-size: 14px; }
-.dsh-axl-canvas-emptystate span { max-width: 340px; font-size: 12px; line-height: 1.5; }
-.dsh-axl-canvas-emptystate .dsh-axl-btn { pointer-events: auto; margin-top: 4px; }
-.dsh-axl-canvas-hintbar { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; padding: 7px 12px; border-radius: 999px; font-size: 11.5px; font-weight: 500; color: var(--dsw-alias-label-primary); background: var(--dsw-alias-bg-overlay, var(--dsw-alias-bg-layer-1)); border: 1px solid var(--dsw-alias-border-l1); box-shadow: 0 8px 24px color-mix(in srgb, var(--dsw-alias-label-primary) 16%, transparent); animation: dsh-axl-pop .18s ease both; }
-.dsh-axl-canvas-hintbar.is-active { border-color: var(--dsw-alias-brand-primary); }
-@keyframes dsh-axl-canvas-in { from { opacity: 0; transform: scale(.96) } to { opacity: 1; transform: none } }
-@media (max-width: 1100px) { .dsh-axl-canvas-select { max-width: 120px; } .dsh-axl-canvas-badge.is-quiet { display: none; } }
+.dsh-scr-canvas { display: flex; flex-direction: column; height: 100%; min-height: 460px; outline: none; position: relative; }
+.dsh-scr-canvas-toolbar { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--dsw-alias-border-l1); background: color-mix(in srgb, var(--dsw-alias-bg-base) 92%, var(--dsw-alias-bg-layer-1)); flex-wrap: wrap; }
+.dsh-scr-canvas-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 600; color: var(--dsw-alias-label-secondary); }
+.dsh-scr-canvas-badge.is-quiet { font-weight: 500; opacity: .85; }
+.dsh-scr-canvas-spacer { flex: 1 1 auto; }
+.dsh-scr-canvas-sep { width: 1px; height: 18px; margin: 0 4px; background: var(--dsw-alias-border-l1); }
+.dsh-scr-canvas-zoom { min-width: 40px; text-align: center; font-size: 11px; font-variant-numeric: tabular-nums; color: var(--dsw-alias-label-secondary); }
+.dsh-scr-canvas-select { max-width: 190px; height: 28px; border-radius: 8px; border: 1px solid var(--dsw-alias-border-l1); background: var(--dsw-alias-bg-base); color: var(--dsw-alias-label-primary); font-size: 12px; padding: 0 8px; }
+.dsh-scr-canvas-note { display: flex; align-items: center; gap: 10px; padding: 6px 14px; font-size: 11.5px; color: var(--dsw-alias-label-secondary); background: color-mix(in srgb, var(--dsw-alias-brand-primary) 8%, transparent); border-bottom: 1px solid var(--dsw-alias-border-l1); }
+.dsh-scr-canvas-notebtn { border: 0; background: transparent; color: var(--dsw-alias-brand-primary); font-size: 11.5px; font-weight: 600; cursor: pointer; }
+.dsh-scr-canvas-viewport { position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden; cursor: grab; background-color: var(--dsw-alias-bg-base); background-image: radial-gradient(color-mix(in srgb, var(--dsw-alias-label-primary) 16%, transparent) 1px, transparent 1px); background-size: 22px 22px; background-position: -1px -1px; }
+.dsh-scr-canvas-viewport:active { cursor: grabbing; }
+.dsh-scr-canvas-viewport.is-linking { cursor: crosshair; }
+.dsh-scr-canvas-stage { position: absolute; inset: 0; transform-origin: 0 0; }
+.dsh-scr-canvas-edges { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+.dsh-scr-canvas-edge { fill: none; stroke: color-mix(in srgb, var(--dsw-alias-label-secondary) 48%, transparent); stroke-width: 1.6; transition: stroke .16s ease; }
+.dsh-scr-canvas-edge.is-selected { stroke: var(--dsw-alias-brand-primary); stroke-width: 2.4; }
+.dsh-scr-canvas-edgehit { fill: none; stroke: transparent; stroke-width: 20; pointer-events: stroke; cursor: pointer; }
+.dsh-scr-canvas-card { position: absolute; display: flex; flex-direction: column; border-radius: 12px; border: 1px solid var(--dsw-alias-border-l1); background: var(--dsw-alias-bg-layer-1); box-shadow: 0 8px 22px color-mix(in srgb, var(--dsw-alias-label-primary) 12%, transparent); overflow: hidden; cursor: grab; transition: box-shadow .16s ease, border-color .16s ease; animation: dsh-scr-canvas-in .26s cubic-bezier(.22,.61,.36,1) both; }
+.dsh-scr-canvas-card:hover { border-color: var(--dsw-alias-border-l2); box-shadow: 0 12px 28px color-mix(in srgb, var(--dsw-alias-label-primary) 18%, transparent); }
+.dsh-scr-canvas-card.is-selected { border-color: var(--dsw-alias-brand-primary); box-shadow: 0 0 0 2px color-mix(in srgb, var(--dsw-alias-brand-primary) 40%, transparent), 0 12px 28px color-mix(in srgb, var(--dsw-alias-label-primary) 18%, transparent); }
+.dsh-scr-canvas-card:focus-visible { outline: 2px solid var(--dsw-alias-brand-primary); outline-offset: 2px; }
+.dsh-scr-canvas-card.is-linkable { cursor: crosshair; }
+.dsh-scr-canvas-card.is-link-source { box-shadow: 0 0 0 2px var(--dsw-alias-brand-primary), 0 0 0 6px color-mix(in srgb, var(--dsw-alias-brand-primary) 18%, transparent); }
+.dsh-scr-canvas-cardbody { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.dsh-scr-canvas-thumb { width: 100%; flex: 1 1 auto; min-height: 0; object-fit: cover; display: block; pointer-events: none; background: var(--dsw-alias-bg-layer-2); }
+.dsh-scr-canvas-placeholder { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; color: var(--dsw-alias-label-secondary); background: linear-gradient(140deg, color-mix(in srgb, var(--dsw-alias-brand-primary) 10%, transparent), var(--dsw-alias-bg-layer-2)); }
+.dsh-scr-canvas-placeholder.is-doc { color: var(--dsw-alias-brand-primary); }
+.dsh-scr-canvas-caption { padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; background: var(--dsw-alias-bg-layer-1); border-top: 1px solid var(--dsw-alias-border-l1); }
+.dsh-scr-canvas-title { font-size: 12px; font-weight: 600; color: var(--dsw-alias-label-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dsh-scr-canvas-sub { font-size: 10.5px; color: var(--dsw-alias-label-secondary); }
+.dsh-scr-canvas-cardfoot { display: flex; align-items: center; gap: 2px; padding: 3px 4px 3px 6px; border-top: 1px solid var(--dsw-alias-border-l1); background: var(--dsw-alias-bg-base); }
+.dsh-scr-canvas-owner { display: inline-flex; align-items: center; gap: 4px; max-width: 62%; border: 0; background: transparent; color: var(--dsw-alias-label-secondary); font-size: 10.5px; cursor: pointer; padding: 2px 4px; border-radius: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dsh-scr-canvas-owner:hover { color: var(--dsw-alias-brand-primary); background: color-mix(in srgb, var(--dsw-alias-brand-primary) 10%, transparent); }
+.dsh-scr-canvas-owner.is-static { cursor: default; }
+.dsh-scr-canvas-resize { position: absolute; right: -1px; bottom: -1px; width: 16px; height: 16px; cursor: nwse-resize; background: linear-gradient(135deg, transparent 46%, color-mix(in srgb, var(--dsw-alias-label-secondary) 55%, transparent) 47%, transparent 58%, color-mix(in srgb, var(--dsw-alias-label-secondary) 55%, transparent) 59%, transparent 70%); }
+.dsh-scr-canvas-emptystate { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; padding: 24px; color: var(--dsw-alias-label-secondary); pointer-events: none; }
+.dsh-scr-canvas-emptystate strong { color: var(--dsw-alias-label-primary); font-size: 14px; }
+.dsh-scr-canvas-emptystate span { max-width: 340px; font-size: 12px; line-height: 1.5; }
+.dsh-scr-canvas-emptystate .dsh-scr-btn { pointer-events: auto; margin-top: 4px; }
+.dsh-scr-canvas-hintbar { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; padding: 7px 12px; border-radius: 999px; font-size: 11.5px; font-weight: 500; color: var(--dsw-alias-label-primary); background: var(--dsw-alias-bg-overlay, var(--dsw-alias-bg-layer-1)); border: 1px solid var(--dsw-alias-border-l1); box-shadow: 0 8px 24px color-mix(in srgb, var(--dsw-alias-label-primary) 16%, transparent); animation: dsh-scr-pop .18s ease both; }
+.dsh-scr-canvas-hintbar.is-active { border-color: var(--dsw-alias-brand-primary); }
+@keyframes dsh-scr-canvas-in { from { opacity: 0; transform: scale(.96) } to { opacity: 1; transform: none } }
+@media (max-width: 1100px) { .dsh-scr-canvas-select { max-width: 120px; } .dsh-scr-canvas-badge.is-quiet { display: none; } }
 `
 
 CSS_CHUNKS.push(CANVAS_CSS)

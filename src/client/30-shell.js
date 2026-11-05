@@ -3,12 +3,12 @@
 function SidebarSection({ title, count, children, action }) {
   return h(
     'section',
-    { className: 'dsh-axl-section' },
+    { className: 'dsh-scr-section' },
     h(
       'div',
-      { className: 'dsh-axl-section-head' },
-      h('span', { className: 'dsh-axl-section-title' }, title),
-      count === undefined ? null : h('span', { className: 'dsh-axl-section-count' }, String(count)),
+      { className: 'dsh-scr-section-head' },
+      h('span', { className: 'dsh-scr-section-title' }, title),
+      count === undefined ? null : h('span', { className: 'dsh-scr-section-count' }, String(count)),
       action || null,
     ),
     children,
@@ -76,7 +76,7 @@ function WorkspaceList({
     if (workspace.id === editingId) {
       return h('input', {
         key: workspace.id,
-        className: 'dsh-axl-input',
+        className: 'dsh-scr-input',
         autoFocus: true,
         value: editDraft,
         style: { margin: '2px 0' },
@@ -92,7 +92,7 @@ function WorkspaceList({
       'div',
       {
         key: workspace.id,
-        className: cx('dsh-axl-ws-row', active && 'is-active', isBound && 'is-project', isMissing && 'is-missing'),
+        className: cx('dsh-scr-ws-row', active && 'is-active', isBound && 'is-project', isMissing && 'is-missing'),
         role: 'button',
         tabIndex: 0,
         onClick: () => onSelect(workspace.id),
@@ -107,26 +107,26 @@ function WorkspaceList({
         title: isBound ? workspace.path || workspace.name : isMissing ? 'This project is no longer in the Harness workspace list' : 'Double-click to rename',
       },
       h('span', {
-        className: 'dsh-axl-ws-dot',
+        className: 'dsh-scr-ws-dot',
         style: model.isProjectWorkspace(workspace) ? { background: 'hsl(' + model.projectHue(workspace.projectId) + ' 65% 55%)' } : undefined,
       }),
       h(
         'span',
-        { className: 'dsh-axl-ws-text' },
-        h('span', { className: 'dsh-axl-ws-name' }, workspace.name),
+        { className: 'dsh-scr-ws-text' },
+        h('span', { className: 'dsh-scr-ws-name' }, workspace.name),
         model.isProjectWorkspace(workspace) && workspace.path
-          ? h('span', { className: 'dsh-axl-ws-path' }, shortProjectPath(workspace.path))
+          ? h('span', { className: 'dsh-scr-ws-path' }, shortProjectPath(workspace.path))
           : null,
       ),
-      isMissing ? h('span', { className: 'dsh-axl-ws-chip' }, 'missing') : null,
+      isMissing ? h('span', { className: 'dsh-scr-ws-chip' }, 'missing') : null,
       h(
         'span',
-        { className: 'dsh-axl-tree-actions' },
+        { className: 'dsh-scr-tree-actions' },
         !isBound && projectList.length > 0
           ? h(
               'select',
               {
-                className: 'dsh-axl-ws-link',
+                className: 'dsh-scr-ws-link',
                 value: '',
                 title: 'Link this notebook to a project',
                 onClick: (event) => event.stopPropagation(),
@@ -145,7 +145,7 @@ function WorkspaceList({
               icon: 'trash',
               label: isMissing ? 'Delete this notebook and its documents' : 'Delete workspace',
               size: 12,
-              className: 'dsh-axl-icon-btn--sm is-danger',
+              className: 'dsh-scr-icon-btn--sm is-danger',
               onClick: (event) => {
                 event.stopPropagation()
                 onRemove(workspace.id)
@@ -159,8 +159,8 @@ function WorkspaceList({
   let body = null
   if (projectMode) {
     body = bound.map(renderRow)
-    if (missing.length > 0) body = body.concat([h('div', { key: 'g-missing', className: 'dsh-axl-ws-group' }, 'Project not found'), missing.map(renderRow)])
-    if (unbound.length > 0) body = body.concat([h('div', { key: 'g-unbound', className: 'dsh-axl-ws-group' }, 'Not linked'), unbound.map(renderRow)])
+    if (missing.length > 0) body = body.concat([h('div', { key: 'g-missing', className: 'dsh-scr-ws-group' }, 'Project not found'), missing.map(renderRow)])
+    if (unbound.length > 0) body = body.concat([h('div', { key: 'g-unbound', className: 'dsh-scr-ws-group' }, 'Not linked'), unbound.map(renderRow)])
   } else {
     body = snapshot.workspaces.map(renderRow)
   }
@@ -175,16 +175,16 @@ function WorkspaceList({
             icon: 'refresh',
             label: projectLoading ? 'Syncing projects…' : 'Sync with Harness projects',
             size: 14,
-            className: cx('dsh-axl-icon-btn--sm', projectLoading && 'is-spinning'),
+            className: cx('dsh-scr-icon-btn--sm', projectLoading && 'is-spinning'),
             disabled: projectLoading,
             onClick: onSync,
           })
-        : h(IconButton, { icon: 'plus', label: 'New workspace', size: 14, className: 'dsh-axl-icon-btn--sm', onClick: () => setCreating(true) }),
+        : h(IconButton, { icon: 'plus', label: 'New workspace', size: 14, className: 'dsh-scr-icon-btn--sm', onClick: () => setCreating(true) }),
     },
-    h('div', { className: 'dsh-axl-ws-list' }, body),
+    h('div', { className: 'dsh-scr-ws-list' }, body),
     !projectMode && creating
       ? h('input', {
-          className: 'dsh-axl-input',
+          className: 'dsh-scr-input',
           autoFocus: true,
           placeholder: 'Workspace name',
           value: draft,
@@ -198,7 +198,7 @@ function WorkspaceList({
         })
       : null,
     projectMode && bound.length === 0 && missing.length === 0
-      ? h('div', { className: 'dsh-axl-ws-empty' }, projectLoading ? 'Loading projects…' : 'No project notebooks yet — press refresh.')
+      ? h('div', { className: 'dsh-scr-ws-empty' }, projectLoading ? 'Loading projects…' : 'No project notebooks yet — press refresh.')
       : null,
   )
 }
@@ -230,11 +230,11 @@ function TreeNode({ snapshot, node, depth, activeId, actions, expandedIds, onDra
 
   return h(
     'div',
-    { className: 'dsh-axl-tree-node' },
+    { className: 'dsh-scr-tree-node' },
     h(
       'div',
       {
-        className: cx('dsh-axl-tree-row', active && 'is-active', dropTarget && 'is-dragover'),
+        className: cx('dsh-scr-tree-row', active && 'is-active', dropTarget && 'is-dragover'),
         style: { paddingLeft: 6 + depth * 13 },
         draggable: !editing,
         onClick: () => (isFolder ? actions.toggleExpanded(node.id) : actions.openNode(node.id)),
@@ -279,7 +279,7 @@ function TreeNode({ snapshot, node, depth, activeId, actions, expandedIds, onDra
         'button',
         {
           type: 'button',
-          className: cx('dsh-axl-tree-chevron', open && 'is-open', !isFolder && 'is-hidden'),
+          className: cx('dsh-scr-tree-chevron', open && 'is-open', !isFolder && 'is-hidden'),
           tabIndex: -1,
           onClick: (event) => {
             stop(event)
@@ -288,10 +288,10 @@ function TreeNode({ snapshot, node, depth, activeId, actions, expandedIds, onDra
         },
         h(Icon, { name: 'chevron', size: 12 }),
       ),
-      h('span', { className: 'dsh-axl-tree-kind' }, h(Icon, { name: node.icon || (isFolder ? 'folder' : 'doc'), size: 14 })),
+      h('span', { className: 'dsh-scr-tree-kind' }, h(Icon, { name: node.icon || (isFolder ? 'folder' : 'doc'), size: 14 })),
       editing
         ? h('input', {
-            className: 'dsh-axl-input',
+            className: 'dsh-scr-input',
             autoFocus: true,
             value: draft,
             style: { padding: '2px 6px', fontSize: 12.5 },
@@ -306,33 +306,33 @@ function TreeNode({ snapshot, node, depth, activeId, actions, expandedIds, onDra
               }
             },
           })
-        : h('span', { className: 'dsh-axl-tree-label', title: node.title }, node.title),
-      node.status === 'done' ? h('span', { className: 'dsh-axl-tree-badge' }, '✓') : null,
+        : h('span', { className: 'dsh-scr-tree-label', title: node.title }, node.title),
+      node.status === 'done' ? h('span', { className: 'dsh-scr-tree-badge' }, '✓') : null,
       h(
         'span',
-        { className: 'dsh-axl-tree-actions' },
+        { className: 'dsh-scr-tree-actions' },
         isFolder
-          ? h(IconButton, { icon: 'plus', label: 'New document here', size: 12, className: 'dsh-axl-icon-btn--sm', onClick: (event) => { stop(event); actions.createDoc(node.id) } })
+          ? h(IconButton, { icon: 'plus', label: 'New document here', size: 12, className: 'dsh-scr-icon-btn--sm', onClick: (event) => { stop(event); actions.createDoc(node.id) } })
           : null,
         h(IconButton, {
           icon: 'star',
           label: node.favorite ? 'Remove from favourites' : 'Add to favourites',
           size: 12,
-          className: cx('dsh-axl-icon-btn--sm', node.favorite && 'is-active'),
+          className: cx('dsh-scr-icon-btn--sm', node.favorite && 'is-active'),
           onClick: (event) => { stop(event); actions.toggleFavorite(node.id) },
         }),
-        h(IconButton, { icon: 'trash', label: 'Move to trash', size: 12, className: 'dsh-axl-icon-btn--sm is-danger', onClick: (event) => { stop(event); actions.trashNode(node.id) } }),
+        h(IconButton, { icon: 'trash', label: 'Move to trash', size: 12, className: 'dsh-scr-icon-btn--sm is-danger', onClick: (event) => { stop(event); actions.trashNode(node.id) } }),
       ),
     ),
     isFolder
       ? h(
           'div',
-          { className: cx('dsh-axl-tree-children', open && 'is-open'), style: { marginLeft: 6 + depth * 13 } },
+          { className: cx('dsh-scr-tree-children', open && 'is-open'), style: { marginLeft: 6 + depth * 13 } },
           h(
             'div',
             null,
             children.length === 0
-              ? h('div', { className: 'dsh-axl-tree-row', style: { paddingLeft: 22, opacity: 0.55, cursor: 'default' } }, h('span', { className: 'dsh-axl-tree-label' }, 'Empty folder'))
+              ? h('div', { className: 'dsh-scr-tree-row', style: { paddingLeft: 22, opacity: 0.55, cursor: 'default' } }, h('span', { className: 'dsh-scr-tree-label' }, 'Empty folder'))
               : children.map((child) =>
                   h(TreeNode, {
                     key: child.id,
@@ -353,11 +353,11 @@ function TreeNode({ snapshot, node, depth, activeId, actions, expandedIds, onDra
 
 function TagCloud({ tags, activeTag, onPick }) {
   if (tags.length === 0) {
-    return h('div', { className: 'dsh-axl-field-hint', style: { padding: '2px 6px 8px' } }, 'Tag a document to see it here.')
+    return h('div', { className: 'dsh-scr-field-hint', style: { padding: '2px 6px 8px' } }, 'Tag a document to see it here.')
   }
   return h(
     'div',
-    { className: 'dsh-axl-chip-wrap', style: { padding: '2px 6px 6px' } },
+    { className: 'dsh-scr-chip-wrap', style: { padding: '2px 6px 6px' } },
     tags.slice(0, 24).map((entry) => {
       const hue = model.tagHue(entry.tag)
       const active = entry.tag === activeTag
@@ -366,7 +366,7 @@ function TagCloud({ tags, activeTag, onPick }) {
         {
           key: entry.tag,
           type: 'button',
-          className: cx('dsh-axl-chip', active && 'is-active'),
+          className: cx('dsh-scr-chip', active && 'is-active'),
           style: {
             background: `hsla(${hue}, 65%, 55%, ${active ? 0.3 : 0.16})`,
             color: `hsl(${hue}, 62%, ${active ? 45 : 62}%)`,
@@ -376,7 +376,7 @@ function TagCloud({ tags, activeTag, onPick }) {
           title: `${entry.count} document(s)`,
         },
         '#' + entry.tag,
-        h('span', { className: 'dsh-axl-tree-badge' }, String(entry.count)),
+        h('span', { className: 'dsh-scr-tree-badge' }, String(entry.count)),
       )
     }),
   )
@@ -394,10 +394,10 @@ function Sidebar({ snapshot, ui, actions, tags, activeTag, projects, projectMode
 
   return h(
     'aside',
-    { className: cx('dsh-axl-sidebar', ui.sidebarCollapsed && 'is-collapsed') },
+    { className: cx('dsh-scr-sidebar', ui.sidebarCollapsed && 'is-collapsed') },
     h(
       'div',
-      { className: 'dsh-axl-sidebar-scroll' },
+      { className: 'dsh-scr-sidebar-scroll' },
       h(WorkspaceList, {
         snapshot,
         activeWorkspaceId: workspaceId,
@@ -420,15 +420,15 @@ function Sidebar({ snapshot, ui, actions, tags, activeTag, projects, projectMode
               action: h(
                 'span',
                 { style: { display: 'flex', gap: 2 } },
-                h(IconButton, { icon: 'folder', label: 'New folder', size: 13, className: 'dsh-axl-icon-btn--sm', onClick: () => actions.createFolder(null) }),
-                h(IconButton, { icon: 'plus', label: 'New document', size: 13, className: 'dsh-axl-icon-btn--sm', onClick: () => actions.createDoc(null) }),
+                h(IconButton, { icon: 'folder', label: 'New folder', size: 13, className: 'dsh-scr-icon-btn--sm', onClick: () => actions.createFolder(null) }),
+                h(IconButton, { icon: 'plus', label: 'New document', size: 13, className: 'dsh-scr-icon-btn--sm', onClick: () => actions.createDoc(null) }),
               ),
             },
             h(
               'div',
-              { className: 'dsh-axl-tree', role: 'tree' },
+              { className: 'dsh-scr-tree', role: 'tree' },
               roots.length === 0
-                ? h('div', { className: 'dsh-axl-field-hint', style: { padding: '4px 6px' } }, 'No documents yet — create one with the + button.')
+                ? h('div', { className: 'dsh-scr-field-hint', style: { padding: '4px 6px' } }, 'No documents yet — create one with the + button.')
                 : roots.map((node) =>
                     h(TreeNode, {
                       key: node.id,
@@ -447,32 +447,32 @@ function Sidebar({ snapshot, ui, actions, tags, activeTag, projects, projectMode
       h(SidebarSection, { title: 'Shortcuts' },
         h(
           'div',
-          { className: 'dsh-axl-tree' },
+          { className: 'dsh-scr-tree' },
           h(
             'div',
             {
-              className: cx('dsh-axl-tree-row', actions.view === 'favorites' && 'is-active'),
+              className: cx('dsh-scr-tree-row', actions.view === 'favorites' && 'is-active'),
               onClick: () => actions.openView('favorites'),
               role: 'button',
               tabIndex: 0,
             },
-            h('span', { className: 'dsh-axl-tree-chevron is-hidden' }),
-            h('span', { className: 'dsh-axl-tree-kind' }, h(Icon, { name: 'star', size: 14 })),
-            h('span', { className: 'dsh-axl-tree-label' }, 'Favourites'),
-            h('span', { className: 'dsh-axl-tree-badge' }, String(favoriteCount)),
+            h('span', { className: 'dsh-scr-tree-chevron is-hidden' }),
+            h('span', { className: 'dsh-scr-tree-kind' }, h(Icon, { name: 'star', size: 14 })),
+            h('span', { className: 'dsh-scr-tree-label' }, 'Favourites'),
+            h('span', { className: 'dsh-scr-tree-badge' }, String(favoriteCount)),
           ),
           h(
             'div',
             {
-              className: cx('dsh-axl-tree-row', actions.view === 'trash' && 'is-active'),
+              className: cx('dsh-scr-tree-row', actions.view === 'trash' && 'is-active'),
               onClick: () => actions.openView('trash'),
               role: 'button',
               tabIndex: 0,
             },
-            h('span', { className: 'dsh-axl-tree-chevron is-hidden' }),
-            h('span', { className: 'dsh-axl-tree-kind' }, h(Icon, { name: 'trash', size: 14 })),
-            h('span', { className: 'dsh-axl-tree-label' }, 'Trash'),
-            h('span', { className: 'dsh-axl-tree-badge' }, String(trashCount)),
+            h('span', { className: 'dsh-scr-tree-chevron is-hidden' }),
+            h('span', { className: 'dsh-scr-tree-kind' }, h(Icon, { name: 'trash', size: 14 })),
+            h('span', { className: 'dsh-scr-tree-label' }, 'Trash'),
+            h('span', { className: 'dsh-scr-tree-badge' }, String(trashCount)),
           ),
         ),
       ),
@@ -482,11 +482,11 @@ function Sidebar({ snapshot, ui, actions, tags, activeTag, projects, projectMode
     ),
     h(
       'div',
-      { className: 'dsh-axl-sidebar-footer' },
+      { className: 'dsh-scr-sidebar-footer' },
       h(IconButton, { icon: 'settings', label: 'Settings', onClick: actions.openSettings }),
       h(IconButton, { icon: 'upload', label: 'Import archive', onClick: actions.importArchive }),
       h(IconButton, { icon: 'download', label: 'Export archive', onClick: actions.exportArchive }),
-      h('span', { className: 'dsh-axl-spacer' }),
+      h('span', { className: 'dsh-scr-spacer' }),
       h(IconButton, { icon: 'sidebar', label: 'Collapse sidebar', onClick: () => actions.patchUi({ sidebarCollapsed: !ui.sidebarCollapsed }) }),
     ),
   )

@@ -140,7 +140,7 @@ function seedSnapshot() {
       workspaceId,
       parentId: null,
       kind: 'doc',
-      title: 'Welcome to Alexandrie',
+      title: 'Welcome to Scriptorium',
       icon: 'sparkles',
       status: 'active',
       tags: ['intro'],
@@ -150,9 +150,9 @@ function seedSnapshot() {
       createdAt: stamp,
       updatedAt: stamp,
       content: [
-        '# Welcome to Alexandrie',
+        '# Welcome to Scriptorium',
         '',
-        'Alexandrie is a self-hosted knowledge base with an extended Markdown editor.',
+        'Scriptorium is a self-hosted knowledge base with an extended Markdown editor.',
         'This plugin brings the same workflow into the DeepSeek Harness Web GUI.',
         '',
         '## What you can do here',
@@ -172,7 +172,7 @@ function seedSnapshot() {
         '- [x] Read the welcome note',
         '',
         '```js',
-        "const notes = await alexandrie.search('markdown')",
+        "const notes = await scriptorium.search('markdown')",
         'console.log(notes.length)',
         '```',
         '',
@@ -323,7 +323,7 @@ function createStore() {  const listeners = new Set()
       try {
         listener()
       } catch (error) {
-        console.error('[dsh-alexandrie] listener failed', error)
+        console.error('[dsh-scriptorium] listener failed', error)
       }
     }
   }

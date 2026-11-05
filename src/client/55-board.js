@@ -13,7 +13,7 @@ function boardGlyph(paths, filled) {
   return h(
     'svg',
     {
-      className: 'dsh-axl-board-glyph',
+      className: 'dsh-scr-board-glyph',
       width: 14,
       height: 14,
       viewBox: '0 0 24 24',
@@ -188,7 +188,7 @@ function KanbanBoard(props) {
       'article',
       {
         key: node.id,
-        className: cx('dsh-axl-board-card', draggedId === node.id && 'is-dragging'),
+        className: cx('dsh-scr-board-card', draggedId === node.id && 'is-dragging'),
         draggable: true,
         tabIndex: 0,
         title,
@@ -201,13 +201,13 @@ function KanbanBoard(props) {
       },
       h(
         'div',
-        { className: 'dsh-axl-board-cardhead' },
-        h('h4', { className: 'dsh-axl-board-cardtitle' }, title),
+        { className: 'dsh-scr-board-cardhead' },
+        h('h4', { className: 'dsh-scr-board-cardtitle' }, title),
         h(
           'button',
           {
             type: 'button',
-            className: cx('dsh-axl-board-iconbtn', 'dsh-axl-board-star', favourite && 'is-on'),
+            className: cx('dsh-scr-board-iconbtn', 'dsh-scr-board-star', favourite && 'is-on'),
             'aria-pressed': favourite,
             'aria-label': (favourite ? 'Remove from favourites: ' : 'Add to favourites: ') + title,
             title: favourite ? 'Remove from favourites' : 'Add to favourites',
@@ -219,19 +219,19 @@ function KanbanBoard(props) {
           boardGlyph([BOARD_STAR_PATH], favourite),
         ),
       ),
-      h('p', { className: 'dsh-axl-board-excerpt' }, excerpt === '' ? 'No content yet' : excerpt),
+      h('p', { className: 'dsh-scr-board-excerpt' }, excerpt === '' ? 'No content yet' : excerpt),
       tags.length === 0
         ? null
         : h(
             'div',
-            { className: 'dsh-axl-board-tags' },
+            { className: 'dsh-scr-board-tags' },
             tags.map((tag) =>
               h(
                 'span',
                 {
                   key: tag,
-                  className: 'dsh-axl-board-tag',
-                  style: { '--dsh-axl-board-hue': tagHue(tag) },
+                  className: 'dsh-scr-board-tag',
+                  style: { '--dsh-scr-board-hue': tagHue(tag) },
                   title: '#' + tag,
                 },
                 '#' + tag,
@@ -240,21 +240,21 @@ function KanbanBoard(props) {
           ),
       h(
         'div',
-        { className: 'dsh-axl-board-foot' },
+        { className: 'dsh-scr-board-foot' },
         h(
           'div',
-          { className: 'dsh-axl-board-meta' },
-          h('span', { className: 'dsh-axl-board-words' }, words + (words === 1 ? ' word' : ' words')),
-          h('span', { className: 'dsh-axl-board-time', title: String(node.updatedAt || '') }, relativeTime(node.updatedAt)),
+          { className: 'dsh-scr-board-meta' },
+          h('span', { className: 'dsh-scr-board-words' }, words + (words === 1 ? ' word' : ' words')),
+          h('span', { className: 'dsh-scr-board-time', title: String(node.updatedAt || '') }, relativeTime(node.updatedAt)),
         ),
         h(
           'div',
-          { className: 'dsh-axl-board-controls' },
+          { className: 'dsh-scr-board-controls' },
           h(
             'button',
             {
               type: 'button',
-              className: 'dsh-axl-board-iconbtn dsh-axl-board-move',
+              className: 'dsh-scr-board-iconbtn dsh-scr-board-move',
               disabled: previous === null,
               'aria-label': previous === null ? 'Already in the first column' : 'Move to ' + statusLabelOf(previous),
               title: previous === null ? 'Already in the first column' : 'Move to ' + statusLabelOf(previous),
@@ -269,7 +269,7 @@ function KanbanBoard(props) {
             'button',
             {
               type: 'button',
-              className: 'dsh-axl-board-iconbtn dsh-axl-board-move',
+              className: 'dsh-scr-board-iconbtn dsh-scr-board-move',
               disabled: next === null,
               'aria-label': next === null ? 'Already in the last column' : 'Move to ' + statusLabelOf(next),
               title: next === null ? 'Already in the last column' : 'Move to ' + statusLabelOf(next),
@@ -284,7 +284,7 @@ function KanbanBoard(props) {
             'button',
             {
               type: 'button',
-              className: 'dsh-axl-board-iconbtn dsh-axl-board-open',
+              className: 'dsh-scr-board-iconbtn dsh-scr-board-open',
               'aria-label': 'Open ' + title,
               title: 'Open',
               onClick: (event) => {
@@ -301,17 +301,17 @@ function KanbanBoard(props) {
 
   return h(
     'div',
-    { className: 'dsh-axl-board' },
+    { className: 'dsh-scr-board' },
     h(
       'div',
-      { className: 'dsh-axl-board-cols' },
+      { className: 'dsh-scr-board-cols' },
       columns.map((column, columnIndex) =>
         h(
           'section',
           {
             key: column.status,
-            className: cx('dsh-axl-board-col', overStatus === column.status && 'is-over'),
-            style: { '--dsh-axl-board-delay': columnIndex * 40 + 'ms' },
+            className: cx('dsh-scr-board-col', overStatus === column.status && 'is-over'),
+            style: { '--dsh-scr-board-delay': columnIndex * 40 + 'ms' },
             'aria-label': statusLabelOf(column.status) + ' column',
             onDragEnter: () => handleDragEnter(column.status),
             onDragOver: (event) => handleDragOver(column.status, event),
@@ -320,24 +320,24 @@ function KanbanBoard(props) {
           },
           h(
             'header',
-            { className: 'dsh-axl-board-colhead' },
+            { className: 'dsh-scr-board-colhead' },
             h('span', {
-              className: 'dsh-axl-board-dot',
+              className: 'dsh-scr-board-dot',
               style: { background: statusTokenOf(column.status) },
               'aria-hidden': 'true',
             }),
-            h('span', { className: 'dsh-axl-board-collabel' }, statusLabelOf(column.status)),
+            h('span', { className: 'dsh-scr-board-collabel' }, statusLabelOf(column.status)),
             h(
               'span',
-              { className: 'dsh-axl-board-count', 'aria-label': column.cards.length + ' documents' },
+              { className: 'dsh-scr-board-count', 'aria-label': column.cards.length + ' documents' },
               String(column.cards.length),
             ),
           ),
           h(
             'div',
-            { className: 'dsh-axl-board-list' },
+            { className: 'dsh-scr-board-list' },
             column.cards.length === 0
-              ? h('p', { key: 'empty', className: 'dsh-axl-board-empty' }, BOARD_EMPTY_HINT)
+              ? h('p', { key: 'empty', className: 'dsh-scr-board-empty' }, BOARD_EMPTY_HINT)
               : column.cards.map(renderCard),
           ),
         ),
@@ -347,65 +347,65 @@ function KanbanBoard(props) {
 }
 
 const BOARD_CSS = `
-/* Alexandrie kanban board: three status columns, draggable cards, keyboard move buttons. */
-.dsh-axl-board { container-type: inline-size; container-name: dsh-axl-board; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; height: 100%; min-height: 0; overflow: auto; padding: 14px; background: var(--dsw-alias-bg-base); color: var(--dsw-alias-label-primary); }
-.dsh-axl-board *, .dsh-axl-board *::before, .dsh-axl-board *::after { box-sizing: border-box; }
-.dsh-axl-board-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: start; }
-.dsh-axl-board-col { position: relative; display: flex; flex-direction: column; gap: 10px; min-height: 150px; padding: 10px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 12px; background: color-mix(in srgb, var(--dsw-alias-bg-layer-2) 70%, var(--dsw-alias-bg-base)); transition: background-color 140ms ease, border-color 140ms ease; animation: dsh-axl-board-col-in 180ms ease backwards; animation-delay: var(--dsh-axl-board-delay, 0ms); }
-.dsh-axl-board-col::after { content: ''; position: absolute; inset: -1px; border: 2px dashed var(--dsw-alias-brand-primary); border-radius: 12px; opacity: 0; transition: opacity 120ms ease; pointer-events: none; }
-.dsh-axl-board-col.is-over { background: color-mix(in srgb, var(--dsw-alias-brand-primary) 8%, var(--dsw-alias-bg-base)); }
-.dsh-axl-board-col.is-over::after { opacity: .85; }
-.dsh-axl-board-colhead { display: flex; align-items: center; gap: 8px; padding: 0 2px; }
-.dsh-axl-board-dot { width: 8px; height: 8px; flex: none; border-radius: 50%; }
-.dsh-axl-board-collabel { font-size: 11.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--dsw-alias-label-primary); }
-.dsh-axl-board-count { margin-left: auto; min-width: 22px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--dsw-alias-border-l1); background: var(--dsw-alias-bg-layer-1); color: var(--dsw-alias-label-secondary); font-size: 11px; font-variant-numeric: tabular-nums; text-align: center; }
-.dsh-axl-board-list { display: flex; flex-direction: column; gap: 8px; }
-.dsh-axl-board-card { position: relative; display: flex; flex-direction: column; gap: 7px; padding: 10px 10px 8px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 10px; background: var(--dsw-alias-bg-layer-1); color: var(--dsw-alias-label-primary); cursor: grab; transition: transform 140ms ease, box-shadow 160ms ease, border-color 140ms ease, opacity 120ms ease; animation: dsh-axl-board-card-in 160ms ease backwards; }
-.dsh-axl-board-card:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--dsw-alias-brand-primary) 34%, var(--dsw-alias-border-l1)); box-shadow: 0 4px 12px color-mix(in srgb, var(--dsw-alias-label-primary) 12%, transparent); }
-.dsh-axl-board-card:focus-visible { outline: 2px solid var(--dsw-alias-brand-primary); outline-offset: 1px; }
-.dsh-axl-board-card.is-dragging { opacity: .45; transform: scale(.995); cursor: grabbing; }
-.dsh-axl-board-cardhead { display: flex; align-items: flex-start; gap: 6px; }
-.dsh-axl-board-cardtitle { flex: 1 1 auto; min-width: 0; margin: 0; font-size: 13px; font-weight: 600; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
-.dsh-axl-board-excerpt { margin: 0; font-size: 11.5px; line-height: 1.45; color: var(--dsw-alias-label-secondary); overflow-wrap: anywhere; }
-.dsh-axl-board-tags { display: flex; flex-wrap: wrap; gap: 4px; }
-.dsh-axl-board-tag { max-width: 100%; padding: 1px 6px; border: 1px solid hsl(var(--dsh-axl-board-hue, 220) 55% 50% / .3); border-radius: 999px; background: hsl(var(--dsh-axl-board-hue, 220) 55% 50% / .13); color: color-mix(in srgb, hsl(var(--dsh-axl-board-hue, 220) 55% 50%) 68%, var(--dsw-alias-label-primary)); font-size: 10.5px; line-height: 1.6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dsh-axl-board-foot { display: flex; align-items: center; gap: 6px; }
-.dsh-axl-board-meta { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 10.5px; color: var(--dsw-alias-label-secondary); font-variant-numeric: tabular-nums; }
-.dsh-axl-board-time { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dsh-axl-board-controls { display: flex; align-items: center; gap: 2px; margin-left: auto; flex: none; }
-.dsh-axl-board-iconbtn { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; flex: none; padding: 0; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease; }
-.dsh-axl-board-iconbtn:hover { background: var(--dsw-alias-bg-layer-2); color: var(--dsw-alias-label-primary); }
-.dsh-axl-board-iconbtn:focus-visible { outline: 2px solid var(--dsw-alias-brand-primary); outline-offset: 1px; }
-.dsh-axl-board-iconbtn:disabled { opacity: .35; cursor: default; }
-.dsh-axl-board-iconbtn:disabled:hover { background: transparent; color: var(--dsw-alias-label-secondary); }
-.dsh-axl-board-star.is-on { color: var(--dsw-alias-state-warn-primary); }
-.dsh-axl-board-move { opacity: 0; }
-.dsh-axl-board-move:disabled { opacity: 0; }
-.dsh-axl-board-card:hover .dsh-axl-board-move, .dsh-axl-board-card:focus-within .dsh-axl-board-move { opacity: 1; }
-.dsh-axl-board-card:hover .dsh-axl-board-move:disabled, .dsh-axl-board-card:focus-within .dsh-axl-board-move:disabled { opacity: .3; }
-.dsh-axl-board-open { color: var(--dsw-alias-brand-primary); }
-.dsh-axl-board-glyph { display: block; flex: none; }
-.dsh-axl-board-empty { margin: 0; padding: 16px 10px; border: 1px dashed var(--dsw-alias-border-l2); border-radius: 8px; text-align: center; font-size: 11.5px; line-height: 1.5; color: var(--dsw-alias-label-secondary); transition: color 140ms ease; }
-.dsh-axl-board-col.is-over .dsh-axl-board-empty { color: var(--dsw-alias-label-primary); }
-@container dsh-axl-board (max-width: 900px) {
-  .dsh-axl-board-cols { grid-template-columns: minmax(0, 1fr); }
-  .dsh-axl-board-col { min-height: 0; }
+/* Scriptorium kanban board: three status columns, draggable cards, keyboard move buttons. */
+.dsh-scr-board { container-type: inline-size; container-name: dsh-scr-board; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; height: 100%; min-height: 0; overflow: auto; padding: 14px; background: var(--dsw-alias-bg-base); color: var(--dsw-alias-label-primary); }
+.dsh-scr-board *, .dsh-scr-board *::before, .dsh-scr-board *::after { box-sizing: border-box; }
+.dsh-scr-board-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: start; }
+.dsh-scr-board-col { position: relative; display: flex; flex-direction: column; gap: 10px; min-height: 150px; padding: 10px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 12px; background: color-mix(in srgb, var(--dsw-alias-bg-layer-2) 70%, var(--dsw-alias-bg-base)); transition: background-color 140ms ease, border-color 140ms ease; animation: dsh-scr-board-col-in 180ms ease backwards; animation-delay: var(--dsh-scr-board-delay, 0ms); }
+.dsh-scr-board-col::after { content: ''; position: absolute; inset: -1px; border: 2px dashed var(--dsw-alias-brand-primary); border-radius: 12px; opacity: 0; transition: opacity 120ms ease; pointer-events: none; }
+.dsh-scr-board-col.is-over { background: color-mix(in srgb, var(--dsw-alias-brand-primary) 8%, var(--dsw-alias-bg-base)); }
+.dsh-scr-board-col.is-over::after { opacity: .85; }
+.dsh-scr-board-colhead { display: flex; align-items: center; gap: 8px; padding: 0 2px; }
+.dsh-scr-board-dot { width: 8px; height: 8px; flex: none; border-radius: 50%; }
+.dsh-scr-board-collabel { font-size: 11.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--dsw-alias-label-primary); }
+.dsh-scr-board-count { margin-left: auto; min-width: 22px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--dsw-alias-border-l1); background: var(--dsw-alias-bg-layer-1); color: var(--dsw-alias-label-secondary); font-size: 11px; font-variant-numeric: tabular-nums; text-align: center; }
+.dsh-scr-board-list { display: flex; flex-direction: column; gap: 8px; }
+.dsh-scr-board-card { position: relative; display: flex; flex-direction: column; gap: 7px; padding: 10px 10px 8px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 10px; background: var(--dsw-alias-bg-layer-1); color: var(--dsw-alias-label-primary); cursor: grab; transition: transform 140ms ease, box-shadow 160ms ease, border-color 140ms ease, opacity 120ms ease; animation: dsh-scr-board-card-in 160ms ease backwards; }
+.dsh-scr-board-card:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--dsw-alias-brand-primary) 34%, var(--dsw-alias-border-l1)); box-shadow: 0 4px 12px color-mix(in srgb, var(--dsw-alias-label-primary) 12%, transparent); }
+.dsh-scr-board-card:focus-visible { outline: 2px solid var(--dsw-alias-brand-primary); outline-offset: 1px; }
+.dsh-scr-board-card.is-dragging { opacity: .45; transform: scale(.995); cursor: grabbing; }
+.dsh-scr-board-cardhead { display: flex; align-items: flex-start; gap: 6px; }
+.dsh-scr-board-cardtitle { flex: 1 1 auto; min-width: 0; margin: 0; font-size: 13px; font-weight: 600; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.dsh-scr-board-excerpt { margin: 0; font-size: 11.5px; line-height: 1.45; color: var(--dsw-alias-label-secondary); overflow-wrap: anywhere; }
+.dsh-scr-board-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.dsh-scr-board-tag { max-width: 100%; padding: 1px 6px; border: 1px solid hsl(var(--dsh-scr-board-hue, 220) 55% 50% / .3); border-radius: 999px; background: hsl(var(--dsh-scr-board-hue, 220) 55% 50% / .13); color: color-mix(in srgb, hsl(var(--dsh-scr-board-hue, 220) 55% 50%) 68%, var(--dsw-alias-label-primary)); font-size: 10.5px; line-height: 1.6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dsh-scr-board-foot { display: flex; align-items: center; gap: 6px; }
+.dsh-scr-board-meta { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 10.5px; color: var(--dsw-alias-label-secondary); font-variant-numeric: tabular-nums; }
+.dsh-scr-board-time { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dsh-scr-board-controls { display: flex; align-items: center; gap: 2px; margin-left: auto; flex: none; }
+.dsh-scr-board-iconbtn { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; flex: none; padding: 0; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease; }
+.dsh-scr-board-iconbtn:hover { background: var(--dsw-alias-bg-layer-2); color: var(--dsw-alias-label-primary); }
+.dsh-scr-board-iconbtn:focus-visible { outline: 2px solid var(--dsw-alias-brand-primary); outline-offset: 1px; }
+.dsh-scr-board-iconbtn:disabled { opacity: .35; cursor: default; }
+.dsh-scr-board-iconbtn:disabled:hover { background: transparent; color: var(--dsw-alias-label-secondary); }
+.dsh-scr-board-star.is-on { color: var(--dsw-alias-state-warn-primary); }
+.dsh-scr-board-move { opacity: 0; }
+.dsh-scr-board-move:disabled { opacity: 0; }
+.dsh-scr-board-card:hover .dsh-scr-board-move, .dsh-scr-board-card:focus-within .dsh-scr-board-move { opacity: 1; }
+.dsh-scr-board-card:hover .dsh-scr-board-move:disabled, .dsh-scr-board-card:focus-within .dsh-scr-board-move:disabled { opacity: .3; }
+.dsh-scr-board-open { color: var(--dsw-alias-brand-primary); }
+.dsh-scr-board-glyph { display: block; flex: none; }
+.dsh-scr-board-empty { margin: 0; padding: 16px 10px; border: 1px dashed var(--dsw-alias-border-l2); border-radius: 8px; text-align: center; font-size: 11.5px; line-height: 1.5; color: var(--dsw-alias-label-secondary); transition: color 140ms ease; }
+.dsh-scr-board-col.is-over .dsh-scr-board-empty { color: var(--dsw-alias-label-primary); }
+@container dsh-scr-board (max-width: 900px) {
+  .dsh-scr-board-cols { grid-template-columns: minmax(0, 1fr); }
+  .dsh-scr-board-col { min-height: 0; }
 }
 @media (max-width: 900px) {
-  .dsh-axl-board-cols { grid-template-columns: minmax(0, 1fr); }
-  .dsh-axl-board-col { min-height: 0; }
+  .dsh-scr-board-cols { grid-template-columns: minmax(0, 1fr); }
+  .dsh-scr-board-col { min-height: 0; }
 }
 @media (hover: none) {
-  .dsh-axl-board-move { opacity: 1; }
-  .dsh-axl-board-move:disabled { opacity: .3; }
+  .dsh-scr-board-move { opacity: 1; }
+  .dsh-scr-board-move:disabled { opacity: .3; }
 }
-@keyframes dsh-axl-board-col-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes dsh-axl-board-card-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes dsh-scr-board-col-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes dsh-scr-board-card-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion: reduce) {
-  .dsh-axl-board-col, .dsh-axl-board-card { animation: none !important; }
-  .dsh-axl-board-col, .dsh-axl-board-col::after, .dsh-axl-board-card, .dsh-axl-board-iconbtn, .dsh-axl-board-move, .dsh-axl-board-empty { transition: none !important; }
-  .dsh-axl-board-card:hover { transform: none !important; }
-  .dsh-axl-board-card.is-dragging { transform: none !important; }
+  .dsh-scr-board-col, .dsh-scr-board-card { animation: none !important; }
+  .dsh-scr-board-col, .dsh-scr-board-col::after, .dsh-scr-board-card, .dsh-scr-board-iconbtn, .dsh-scr-board-move, .dsh-scr-board-empty { transition: none !important; }
+  .dsh-scr-board-card:hover { transform: none !important; }
+  .dsh-scr-board-card.is-dragging { transform: none !important; }
 }
 `
 

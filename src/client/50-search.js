@@ -7,27 +7,27 @@ const AXL_SEARCH_RECENT = 8
 const AXL_SEARCH_EXCERPT_RADIUS = 120
 
 /** Markdown-stripped plain text when the sibling helper exists, raw content otherwise. */
-function axlSearchPlainText(value) {
+function scrSearchPlainText(value) {
   const text = String(value === undefined || value === null ? '' : value)
   if (typeof markdownPlainText === 'function') {
     try {
       const plain = markdownPlainText(text)
       if (typeof plain === 'string') return plain
     } catch (error) {
-      console.warn('[dsh-alexandrie] markdownPlainText failed, falling back to raw content', error)
+      console.warn('[dsh-scriptorium] markdownPlainText failed, falling back to raw content', error)
     }
   }
   return text
 }
 
 /** Sort key: numeric updatedAt, invalid/missing dates sort last. */
-function axlSearchStampOf(node) {
+function scrSearchStampOf(node) {
   const parsed = Date.parse(String((node && node.updatedAt) || ''))
   return Number.isNaN(parsed) ? 0 : parsed
 }
 
 /** Content weight: bounded so body hits can never outrank a title hit. */
-function axlSearchContentWeight(body, needle) {
+function scrSearchContentWeight(body, needle) {
   const haystack = String(body === undefined || body === null ? '' : body).toLowerCase()
   const lowerNeedle = String(needle || '').toLowerCase()
   if (haystack === '' || lowerNeedle === '') return 0
@@ -45,11 +45,11 @@ function axlSearchContentWeight(body, needle) {
 }
 
 /** Highlight segments -> spans; hit spans carry the shared highlight class. */
-function axlSearchSegments(segments) {
+function scrSearchSegments(segments) {
   const list = Array.isArray(segments) ? segments : []
   return list.map((segment, index) =>
     segment.hit === true
-      ? h('span', { key: 'hit-' + index, className: 'dsh-axl-search-hit' }, segment.text)
+      ? h('span', { key: 'hit-' + index, className: 'dsh-scr-search-hit' }, segment.text)
       : h('span', { key: 'plain-' + index }, segment.text),
   )
 }
@@ -75,13 +75,13 @@ function searchDocuments(snapshot, query, options) {
   if (needle === '') {
     const recent = pool
       .slice()
-      .sort((left, right) => axlSearchStampOf(right) - axlSearchStampOf(left))
+      .sort((left, right) => scrSearchStampOf(right) - scrSearchStampOf(left))
       .slice(0, Math.min(AXL_SEARCH_RECENT, limit))
     return recent.map((node) => ({
       node,
       score: 0,
       titleSegments: matchSegments(node.title, ''),
-      excerptSegments: matchSegments(excerptFor(axlSearchPlainText(node.content), '', AXL_SEARCH_EXCERPT_RADIUS), ''),
+      excerptSegments: matchSegments(excerptFor(scrSearchPlainText(node.content), '', AXL_SEARCH_EXCERPT_RADIUS), ''),
     }))
   }
 
@@ -95,8 +95,8 @@ function searchDocuments(snapshot, query, options) {
         if (value !== null && (tagScore === null || value > tagScore)) tagScore = value
       }
     }
-    const body = axlSearchPlainText(node.content)
-    const contentScore = axlSearchContentWeight(body, needle)
+    const body = scrSearchPlainText(node.content)
+    const contentScore = scrSearchContentWeight(body, needle)
     if (titleScore === null && tagScore === null && contentScore === 0) continue
     scored.push({
       node,
@@ -107,13 +107,13 @@ function searchDocuments(snapshot, query, options) {
   }
 
   scored.sort(
-    (left, right) => right.score - left.score || axlSearchStampOf(right.node) - axlSearchStampOf(left.node),
+    (left, right) => right.score - left.score || scrSearchStampOf(right.node) - scrSearchStampOf(left.node),
   )
   return scored.slice(0, limit)
 }
 
 /** Wrap-around cursor movement shared by both lists. */
-function axlSearchStep(index, delta, length) {
+function scrSearchStep(index, delta, length) {
   if (length <= 0) return 0
   const base = Math.min(Math.max(index, 0), length - 1)
   return ((base + delta) % length + length) % length
@@ -172,12 +172,12 @@ function SearchOverlay(props) {
   const onKeyDown = (event) => {
     if (event.key === 'ArrowDown') {
       event.preventDefault()
-      setSelected(axlSearchStep(activeIndex, 1, count))
+      setSelected(scrSearchStep(activeIndex, 1, count))
       return
     }
     if (event.key === 'ArrowUp') {
       event.preventDefault()
-      setSelected(axlSearchStep(activeIndex, -1, count))
+      setSelected(scrSearchStep(activeIndex, -1, count))
       return
     }
     if (event.key === 'Enter') {
@@ -204,8 +204,8 @@ function SearchOverlay(props) {
       'div',
       {
         key: node.id,
-        id: 'dsh-axl-search-row-' + index,
-        className: 'dsh-axl-search-row',
+        id: 'dsh-scr-search-row-' + index,
+        className: 'dsh-scr-search-row',
         role: 'option',
         'aria-selected': index === activeIndex ? 'true' : 'false',
         'data-index': index,
@@ -217,43 +217,43 @@ function SearchOverlay(props) {
       },
       h(
         'div',
-        { className: 'dsh-axl-search-rowtop' },
-        h('span', { className: 'dsh-axl-search-rowtitle' }, axlSearchSegments(result.titleSegments)),
-        h('span', { className: 'dsh-axl-search-rowtime' }, relativeTime(node.updatedAt)),
+        { className: 'dsh-scr-search-rowtop' },
+        h('span', { className: 'dsh-scr-search-rowtitle' }, scrSearchSegments(result.titleSegments)),
+        h('span', { className: 'dsh-scr-search-rowtime' }, relativeTime(node.updatedAt)),
       ),
       h(
         'div',
-        { className: 'dsh-axl-search-rowmeta' },
+        { className: 'dsh-scr-search-rowmeta' },
         tags.map((tag) =>
-          h('span', { key: 'tag:' + tag, className: 'dsh-axl-search-tag' }, '#' + tag),
+          h('span', { key: 'tag:' + tag, className: 'dsh-scr-search-tag' }, '#' + tag),
         ),
         h(
           'span',
-          { className: 'dsh-axl-search-ws' },
+          { className: 'dsh-scr-search-ws' },
           workspace === null || workspace === undefined ? 'Unknown workspace' : workspace.name,
         ),
       ),
       excerptText === ''
-        ? h('div', { className: 'dsh-axl-search-excerpt dsh-axl-search-excerpt-empty' }, 'No content yet')
-        : h('div', { className: 'dsh-axl-search-excerpt' }, axlSearchSegments(result.excerptSegments)),
+        ? h('div', { className: 'dsh-scr-search-excerpt dsh-scr-search-excerpt-empty' }, 'No content yet')
+        : h('div', { className: 'dsh-scr-search-excerpt' }, scrSearchSegments(result.excerptSegments)),
     )
   }
 
   const renderEmpty = () =>
     h(
       'div',
-      { className: 'dsh-axl-search-empty' },
-      h('span', { className: 'dsh-axl-search-emptytitle' }, 'No documents match “' + trimmed + '”'),
+      { className: 'dsh-scr-search-empty' },
+      h('span', { className: 'dsh-scr-search-emptytitle' }, 'No documents match “' + trimmed + '”'),
       h(
         'span',
-        { className: 'dsh-axl-search-emptysub' },
+        { className: 'dsh-scr-search-emptysub' },
         'Try a shorter word, a tag name, or another workspace.',
       ),
       h(
         'button',
         {
           type: 'button',
-          className: 'dsh-axl-search-clear',
+          className: 'dsh-scr-search-clear',
           onMouseDown: (event) => event.preventDefault(),
           onClick: () => onQueryChange(''),
         },
@@ -264,7 +264,7 @@ function SearchOverlay(props) {
   return h(
     'div',
     {
-      className: 'dsh-axl-search-panel',
+      className: 'dsh-scr-search-panel',
       role: 'dialog',
       'aria-modal': 'true',
       'aria-label': 'Search documents',
@@ -272,11 +272,11 @@ function SearchOverlay(props) {
     },
     h(
       'div',
-      { className: 'dsh-axl-search-head' },
-      h('span', { className: 'dsh-axl-search-glyph', 'aria-hidden': 'true' }, '⌕'),
+      { className: 'dsh-scr-search-head' },
+      h('span', { className: 'dsh-scr-search-glyph', 'aria-hidden': 'true' }, '⌕'),
       h('input', {
         ref: fieldRef,
-        className: 'dsh-axl-search-input',
+        className: 'dsh-scr-search-input',
         type: 'text',
         value: query,
         placeholder: 'Search titles, tags and content…',
@@ -287,7 +287,7 @@ function SearchOverlay(props) {
       }),
       h(
         'span',
-        { className: 'dsh-axl-search-count' },
+        { className: 'dsh-scr-search-count' },
         hasQuery
           ? count === 1
             ? '1 result'
@@ -298,7 +298,7 @@ function SearchOverlay(props) {
       ),
       h(
         'button',
-        { type: 'button', className: 'dsh-axl-search-close', onClick: onClose, 'aria-label': 'Close search' },
+        { type: 'button', className: 'dsh-scr-search-close', onClick: onClose, 'aria-label': 'Close search' },
         'esc',
       ),
     ),
@@ -306,11 +306,11 @@ function SearchOverlay(props) {
       ? null
       : h(
           'div',
-          { className: 'dsh-axl-search-hint' },
-          h('span', { className: 'dsh-axl-search-hinttitle' }, 'Search across every workspace'),
+          { className: 'dsh-scr-search-hint' },
+          h('span', { className: 'dsh-scr-search-hinttitle' }, 'Search across every workspace'),
           h(
             'span',
-            { className: 'dsh-axl-search-hintsub' },
+            { className: 'dsh-scr-search-hintsub' },
             'Matches titles, tags and body text — pass a workspace to narrow it down.',
           ),
         ),
@@ -318,23 +318,23 @@ function SearchOverlay(props) {
       ? null
       : count === 0
         ? null
-        : h('div', { className: 'dsh-axl-search-section' }, 'Recent documents'),
+        : h('div', { className: 'dsh-scr-search-section' }, 'Recent documents'),
     h(
       'div',
       {
         ref: listRef,
-        className: 'dsh-axl-search-body',
+        className: 'dsh-scr-search-body',
         role: 'listbox',
         'aria-label': 'Search results',
-        'aria-activedescendant': activeIndex >= 0 ? 'dsh-axl-search-row-' + activeIndex : undefined,
+        'aria-activedescendant': activeIndex >= 0 ? 'dsh-scr-search-row-' + activeIndex : undefined,
       },
-      count === 0 ? (hasQuery ? renderEmpty() : h('div', { className: 'dsh-axl-search-empty' }, h('span', { className: 'dsh-axl-search-emptysub' }, 'No documents yet — create one to see it here.'))) : results.map(renderRow),
+      count === 0 ? (hasQuery ? renderEmpty() : h('div', { className: 'dsh-scr-search-empty' }, h('span', { className: 'dsh-scr-search-emptysub' }, 'No documents yet — create one to see it here.'))) : results.map(renderRow),
     ),
     h(
       'div',
-      { className: 'dsh-axl-search-foot' },
+      { className: 'dsh-scr-search-foot' },
       h('span', null, '↑↓ navigate · ↵ open · esc close'),
-      h('span', { className: 'dsh-axl-search-footnote' }, hasQuery ? 'ranked by title, tags, content' : 'by last edit'),
+      h('span', { className: 'dsh-scr-search-footnote' }, hasQuery ? 'ranked by title, tags, content' : 'by last edit'),
     ),
   )
 }
@@ -344,7 +344,7 @@ const AXL_PALETTE_RECENT = []
 const AXL_PALETTE_RECENT_MAX = 5
 
 /** Remember a command id so the palette can float recently used entries to the top. */
-function axlPaletteTouch(commandId) {
+function scrPaletteTouch(commandId) {
   if (commandId === undefined || commandId === null) return
   const id = String(commandId)
   if (id === '') return
@@ -354,7 +354,7 @@ function axlPaletteTouch(commandId) {
   if (AXL_PALETTE_RECENT.length > AXL_PALETTE_RECENT_MAX) AXL_PALETTE_RECENT.length = AXL_PALETTE_RECENT_MAX
 }
 
-function axlPaletteFilter(commands, query) {
+function scrPaletteFilter(commands, query) {
   const needle = String(query === undefined || query === null ? '' : query).trim()
   const scored = []
   commands.forEach((command, order) => {
@@ -377,7 +377,7 @@ function axlPaletteFilter(commands, query) {
 }
 
 /** Group in visual order and stamp each row with its keyboard index. */
-function axlPaletteGroups(commands) {
+function scrPaletteGroups(commands) {
   const names = []
   const buckets = new Map()
   for (const command of commands) {
@@ -402,16 +402,16 @@ function axlPaletteGroups(commands) {
   return groups
 }
 
-function axlPaletteIcon(icon) {
+function scrPaletteIcon(icon) {
   if (icon === undefined || icon === null || icon === false) return null
   if (typeof icon === 'string') {
     const known = Object.prototype.hasOwnProperty.call(ICONS, icon)
-    return h('span', { className: 'dsh-axl-palette-icon', 'aria-hidden': 'true' }, known ? h(Icon, { name: icon, size: 15 }) : icon)
+    return h('span', { className: 'dsh-scr-palette-icon', 'aria-hidden': 'true' }, known ? h(Icon, { name: icon, size: 15 }) : icon)
   }
   if (typeof icon === 'function') {
-    return h('span', { className: 'dsh-axl-palette-icon', 'aria-hidden': 'true' }, h(icon, { size: 15 }))
+    return h('span', { className: 'dsh-scr-palette-icon', 'aria-hidden': 'true' }, h(icon, { size: 15 }))
   }
-  return h('span', { className: 'dsh-axl-palette-icon', 'aria-hidden': 'true' }, icon)
+  return h('span', { className: 'dsh-scr-palette-icon', 'aria-hidden': 'true' }, icon)
 }
 
 function CommandPalette(props) {
@@ -428,8 +428,8 @@ function CommandPalette(props) {
   const selected = selectedState[0]
   const setSelected = selectedState[1]
 
-  const filtered = React.useMemo(() => axlPaletteFilter(commands, query), [commands, query])
-  const groups = React.useMemo(() => axlPaletteGroups(filtered), [filtered])
+  const filtered = React.useMemo(() => scrPaletteFilter(commands, query), [commands, query])
+  const groups = React.useMemo(() => scrPaletteGroups(filtered), [filtered])
   const count = filtered.length
   const activeIndex = count === 0 ? -1 : Math.min(selected, count - 1)
   const trimmed = query.trim()
@@ -455,11 +455,11 @@ function CommandPalette(props) {
   const runAt = (index) => {
     const command = filtered[index]
     if (command === undefined) return
-    axlPaletteTouch(command.id)
+    scrPaletteTouch(command.id)
     try {
       if (typeof command.run === 'function') command.run()
     } catch (error) {
-      console.error('[dsh-alexandrie] command failed', error)
+      console.error('[dsh-scriptorium] command failed', error)
     } finally {
       onClose()
     }
@@ -468,12 +468,12 @@ function CommandPalette(props) {
   const onKeyDown = (event) => {
     if (event.key === 'ArrowDown') {
       event.preventDefault()
-      setSelected(axlSearchStep(activeIndex, 1, count))
+      setSelected(scrSearchStep(activeIndex, 1, count))
       return
     }
     if (event.key === 'ArrowUp') {
       event.preventDefault()
-      setSelected(axlSearchStep(activeIndex, -1, count))
+      setSelected(scrSearchStep(activeIndex, -1, count))
       return
     }
     if (event.key === 'Enter') {
@@ -491,7 +491,7 @@ function CommandPalette(props) {
   return h(
     'div',
     {
-      className: 'dsh-axl-palette-backdrop',
+      className: 'dsh-scr-palette-backdrop',
       onMouseDown: (event) => {
         if (event.target === event.currentTarget) onClose()
       },
@@ -499,7 +499,7 @@ function CommandPalette(props) {
     h(
       'div',
       {
-        className: 'dsh-axl-palette-card',
+        className: 'dsh-scr-palette-card',
         role: 'dialog',
         'aria-modal': 'true',
         'aria-label': 'Command palette',
@@ -508,11 +508,11 @@ function CommandPalette(props) {
       },
       h(
         'div',
-        { className: 'dsh-axl-palette-head' },
-        h('span', { className: 'dsh-axl-palette-glyph', 'aria-hidden': 'true' }, '⌘'),
+        { className: 'dsh-scr-palette-head' },
+        h('span', { className: 'dsh-scr-palette-glyph', 'aria-hidden': 'true' }, '⌘'),
         h('input', {
           ref: fieldRef,
-          className: 'dsh-axl-palette-input',
+          className: 'dsh-scr-palette-input',
           type: 'text',
           value: query,
           placeholder: 'Type a command…',
@@ -521,31 +521,31 @@ function CommandPalette(props) {
           'aria-label': 'Command query',
           onChange: (event) => setQuery(event.target.value),
         }),
-        h('span', { className: 'dsh-axl-palette-count' }, count === 1 ? '1' : String(count)),
+        h('span', { className: 'dsh-scr-palette-count' }, count === 1 ? '1' : String(count)),
       ),
       h(
         'div',
         {
           ref: listRef,
-          className: 'dsh-axl-palette-list',
+          className: 'dsh-scr-palette-list',
           role: 'listbox',
           'aria-label': 'Commands',
-          'aria-activedescendant': activeIndex >= 0 ? 'dsh-axl-palette-row-' + activeIndex : undefined,
+          'aria-activedescendant': activeIndex >= 0 ? 'dsh-scr-palette-row-' + activeIndex : undefined,
         },
         count === 0
           ? h(
               'div',
-              { className: 'dsh-axl-palette-empty' },
-              h('span', { className: 'dsh-axl-palette-emptytitle' }, 'No matching command'),
+              { className: 'dsh-scr-palette-empty' },
+              h('span', { className: 'dsh-scr-palette-emptytitle' }, 'No matching command'),
               trimmed === ''
                 ? null
-                : h('span', { className: 'dsh-axl-palette-emptysub' }, 'Nothing answers “' + trimmed + '”.'),
+                : h('span', { className: 'dsh-scr-palette-emptysub' }, 'Nothing answers “' + trimmed + '”.'),
             )
           : groups.map((group) =>
               h(
                 'div',
-                { key: 'group:' + group.name, className: 'dsh-axl-palette-group', role: 'presentation' },
-                h('div', { className: 'dsh-axl-palette-grouplabel' }, group.name),
+                { key: 'group:' + group.name, className: 'dsh-scr-palette-group', role: 'presentation' },
+                h('div', { className: 'dsh-scr-palette-grouplabel' }, group.name),
                 group.items.map((entry) => {
                   const command = entry.command
                   const isActive = entry.index === activeIndex
@@ -553,8 +553,8 @@ function CommandPalette(props) {
                     'div',
                     {
                       key: String(command.id === undefined ? group.name + ':' + entry.index : command.id),
-                      id: 'dsh-axl-palette-row-' + entry.index,
-                      className: 'dsh-axl-palette-row',
+                      id: 'dsh-scr-palette-row-' + entry.index,
+                      className: 'dsh-scr-palette-row',
                       role: 'option',
                       'aria-selected': isActive ? 'true' : 'false',
                       'data-index': entry.index,
@@ -563,18 +563,18 @@ function CommandPalette(props) {
                       onMouseEnter: () => setSelected(entry.index),
                       onClick: () => runAt(entry.index),
                     },
-                    axlPaletteIcon(command.icon),
+                    scrPaletteIcon(command.icon),
                     h(
                       'span',
-                      { className: 'dsh-axl-palette-rowmain' },
+                      { className: 'dsh-scr-palette-rowmain' },
                       h(
                         'span',
-                        { className: 'dsh-axl-palette-title' },
-                        axlSearchSegments(matchSegments(command.title, trimmed)),
+                        { className: 'dsh-scr-palette-title' },
+                        scrSearchSegments(matchSegments(command.title, trimmed)),
                       ),
                       command.hint === undefined || command.hint === null || String(command.hint) === ''
                         ? null
-                        : h('span', { className: 'dsh-axl-palette-hint' }, String(command.hint)),
+                        : h('span', { className: 'dsh-scr-palette-hint' }, String(command.hint)),
                     ),
                   )
                 }),
@@ -583,7 +583,7 @@ function CommandPalette(props) {
       ),
       h(
         'div',
-        { className: 'dsh-axl-palette-foot' },
+        { className: 'dsh-scr-palette-foot' },
         h('span', null, '↑↓ navigate · ↵ run · esc close'),
       ),
     ),
@@ -591,73 +591,73 @@ function CommandPalette(props) {
 }
 
 const SEARCH_CSS = `
-/* ---- dsh-alexandrie search overlay + command palette ---- */
-.dsh-axl-search-panel { display:flex; flex-direction:column; width:min(760px,100%); max-height:min(78vh,720px); margin:0 auto; background:var(--dsw-alias-bg-layer-1); color:var(--dsw-alias-label-primary); border:1px solid var(--dsw-alias-border-l2); border-radius:16px; overflow:hidden; box-shadow:0 24px 64px -28px color-mix(in srgb, var(--dsw-alias-bg-overlay) 72%, transparent); animation:dsh-axl-search-rise .16s ease-out both; }
-.dsh-axl-search-panel:focus-within { border-color:color-mix(in srgb, var(--dsw-alias-brand-primary) 42%, var(--dsw-alias-border-l2)); }
-.dsh-axl-search-head { display:flex; align-items:center; gap:10px; padding:14px 16px; border-bottom:1px solid var(--dsw-alias-border-l1); }
-.dsh-axl-search-glyph { font-size:18px; line-height:1; color:var(--dsw-alias-label-secondary); }
-.dsh-axl-search-input { flex:1; min-width:0; border:0; outline:0; background:transparent; color:var(--dsw-alias-label-primary); font:inherit; font-size:17px; letter-spacing:.01em; padding:2px 0; }
-.dsh-axl-search-input::placeholder { color:var(--dsw-alias-label-secondary); }
-.dsh-axl-search-count { font-size:11px; color:var(--dsw-alias-label-secondary); border:1px solid var(--dsw-alias-border-l1); border-radius:999px; padding:2px 8px; white-space:nowrap; }
-.dsh-axl-search-close { font-size:11px; font-family:inherit; color:var(--dsw-alias-label-secondary); background:var(--dsw-alias-bg-layer-2); border:1px solid var(--dsw-alias-border-l1); border-radius:999px; padding:2px 8px; cursor:pointer; transition:color .15s ease, background-color .15s ease; }
-.dsh-axl-search-close:hover { color:var(--dsw-alias-label-primary); background:var(--dsw-alias-bg-layer-1); }
-.dsh-axl-search-hint { display:flex; flex-direction:column; gap:3px; padding:12px 16px 4px; }
-.dsh-axl-search-hinttitle { font-size:13px; font-weight:600; color:var(--dsw-alias-label-primary); }
-.dsh-axl-search-hintsub { font-size:12px; color:var(--dsw-alias-label-secondary); }
-.dsh-axl-search-section { padding:10px 18px 2px; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--dsw-alias-label-secondary); }
-.dsh-axl-search-body { flex:1; min-height:0; overflow-y:auto; scrollbar-width:thin; padding:8px; display:flex; flex-direction:column; gap:2px; }
-.dsh-axl-search-row { display:flex; flex-direction:column; gap:5px; padding:10px 12px; border-radius:10px; border:1px solid transparent; cursor:pointer; animation:dsh-axl-search-row-in .2s ease-out both; transition:background-color .18s ease, border-color .18s ease; }
-.dsh-axl-search-row[data-selected="true"] { background:color-mix(in srgb, var(--dsw-alias-brand-primary) 14%, var(--dsw-alias-bg-layer-2)); border-color:color-mix(in srgb, var(--dsw-alias-brand-primary) 34%, transparent); }
-.dsh-axl-search-rowtop { display:flex; align-items:baseline; gap:10px; }
-.dsh-axl-search-rowtitle { flex:1; min-width:0; font-size:14px; font-weight:600; color:var(--dsw-alias-label-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.dsh-axl-search-rowtime { font-size:11px; color:var(--dsw-alias-label-secondary); white-space:nowrap; }
-.dsh-axl-search-rowmeta { display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-size:11px; color:var(--dsw-alias-label-secondary); }
-.dsh-axl-search-tag { color:var(--dsw-alias-brand-primary); background:color-mix(in srgb, var(--dsw-alias-brand-primary) 12%, transparent); border:1px solid color-mix(in srgb, var(--dsw-alias-brand-primary) 24%, transparent); border-radius:999px; padding:0 7px; }
-.dsh-axl-search-ws { margin-left:auto; opacity:.85; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:45%; }
-.dsh-axl-search-excerpt { font-size:12.5px; line-height:1.5; color:var(--dsw-alias-label-secondary); overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
-.dsh-axl-search-excerpt-empty { font-style:italic; opacity:.7; }
-.dsh-axl-search-hit { background:color-mix(in srgb, var(--dsw-alias-brand-primary) 22%, transparent); color:var(--dsw-alias-brand-primary); border-radius:4px; padding:0 2px; font-weight:600; }
-.dsh-axl-search-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; padding:44px 24px; text-align:center; }
-.dsh-axl-search-emptytitle { font-size:14px; font-weight:600; color:var(--dsw-alias-label-primary); }
-.dsh-axl-search-emptysub { font-size:12.5px; color:var(--dsw-alias-label-secondary); }
-.dsh-axl-search-clear { margin-top:6px; font:inherit; font-size:12px; color:var(--dsw-alias-brand-primary); background:color-mix(in srgb, var(--dsw-alias-brand-primary) 10%, transparent); border:1px solid color-mix(in srgb, var(--dsw-alias-brand-primary) 30%, transparent); border-radius:8px; padding:5px 12px; cursor:pointer; }
-.dsh-axl-search-foot { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:9px 16px; border-top:1px solid var(--dsw-alias-border-l1); font-size:11px; color:var(--dsw-alias-label-secondary); background:var(--dsw-alias-bg-layer-2); }
-.dsh-axl-search-footnote { opacity:.8; }
+/* ---- dsh-scriptorium search overlay + command palette ---- */
+.dsh-scr-search-panel { display:flex; flex-direction:column; width:min(760px,100%); max-height:min(78vh,720px); margin:0 auto; background:var(--dsw-alias-bg-layer-1); color:var(--dsw-alias-label-primary); border:1px solid var(--dsw-alias-border-l2); border-radius:16px; overflow:hidden; box-shadow:0 24px 64px -28px color-mix(in srgb, var(--dsw-alias-bg-overlay) 72%, transparent); animation:dsh-scr-search-rise .16s ease-out both; }
+.dsh-scr-search-panel:focus-within { border-color:color-mix(in srgb, var(--dsw-alias-brand-primary) 42%, var(--dsw-alias-border-l2)); }
+.dsh-scr-search-head { display:flex; align-items:center; gap:10px; padding:14px 16px; border-bottom:1px solid var(--dsw-alias-border-l1); }
+.dsh-scr-search-glyph { font-size:18px; line-height:1; color:var(--dsw-alias-label-secondary); }
+.dsh-scr-search-input { flex:1; min-width:0; border:0; outline:0; background:transparent; color:var(--dsw-alias-label-primary); font:inherit; font-size:17px; letter-spacing:.01em; padding:2px 0; }
+.dsh-scr-search-input::placeholder { color:var(--dsw-alias-label-secondary); }
+.dsh-scr-search-count { font-size:11px; color:var(--dsw-alias-label-secondary); border:1px solid var(--dsw-alias-border-l1); border-radius:999px; padding:2px 8px; white-space:nowrap; }
+.dsh-scr-search-close { font-size:11px; font-family:inherit; color:var(--dsw-alias-label-secondary); background:var(--dsw-alias-bg-layer-2); border:1px solid var(--dsw-alias-border-l1); border-radius:999px; padding:2px 8px; cursor:pointer; transition:color .15s ease, background-color .15s ease; }
+.dsh-scr-search-close:hover { color:var(--dsw-alias-label-primary); background:var(--dsw-alias-bg-layer-1); }
+.dsh-scr-search-hint { display:flex; flex-direction:column; gap:3px; padding:12px 16px 4px; }
+.dsh-scr-search-hinttitle { font-size:13px; font-weight:600; color:var(--dsw-alias-label-primary); }
+.dsh-scr-search-hintsub { font-size:12px; color:var(--dsw-alias-label-secondary); }
+.dsh-scr-search-section { padding:10px 18px 2px; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--dsw-alias-label-secondary); }
+.dsh-scr-search-body { flex:1; min-height:0; overflow-y:auto; scrollbar-width:thin; padding:8px; display:flex; flex-direction:column; gap:2px; }
+.dsh-scr-search-row { display:flex; flex-direction:column; gap:5px; padding:10px 12px; border-radius:10px; border:1px solid transparent; cursor:pointer; animation:dsh-scr-search-row-in .2s ease-out both; transition:background-color .18s ease, border-color .18s ease; }
+.dsh-scr-search-row[data-selected="true"] { background:color-mix(in srgb, var(--dsw-alias-brand-primary) 14%, var(--dsw-alias-bg-layer-2)); border-color:color-mix(in srgb, var(--dsw-alias-brand-primary) 34%, transparent); }
+.dsh-scr-search-rowtop { display:flex; align-items:baseline; gap:10px; }
+.dsh-scr-search-rowtitle { flex:1; min-width:0; font-size:14px; font-weight:600; color:var(--dsw-alias-label-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.dsh-scr-search-rowtime { font-size:11px; color:var(--dsw-alias-label-secondary); white-space:nowrap; }
+.dsh-scr-search-rowmeta { display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-size:11px; color:var(--dsw-alias-label-secondary); }
+.dsh-scr-search-tag { color:var(--dsw-alias-brand-primary); background:color-mix(in srgb, var(--dsw-alias-brand-primary) 12%, transparent); border:1px solid color-mix(in srgb, var(--dsw-alias-brand-primary) 24%, transparent); border-radius:999px; padding:0 7px; }
+.dsh-scr-search-ws { margin-left:auto; opacity:.85; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:45%; }
+.dsh-scr-search-excerpt { font-size:12.5px; line-height:1.5; color:var(--dsw-alias-label-secondary); overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+.dsh-scr-search-excerpt-empty { font-style:italic; opacity:.7; }
+.dsh-scr-search-hit { background:color-mix(in srgb, var(--dsw-alias-brand-primary) 22%, transparent); color:var(--dsw-alias-brand-primary); border-radius:4px; padding:0 2px; font-weight:600; }
+.dsh-scr-search-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; padding:44px 24px; text-align:center; }
+.dsh-scr-search-emptytitle { font-size:14px; font-weight:600; color:var(--dsw-alias-label-primary); }
+.dsh-scr-search-emptysub { font-size:12.5px; color:var(--dsw-alias-label-secondary); }
+.dsh-scr-search-clear { margin-top:6px; font:inherit; font-size:12px; color:var(--dsw-alias-brand-primary); background:color-mix(in srgb, var(--dsw-alias-brand-primary) 10%, transparent); border:1px solid color-mix(in srgb, var(--dsw-alias-brand-primary) 30%, transparent); border-radius:8px; padding:5px 12px; cursor:pointer; }
+.dsh-scr-search-foot { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:9px 16px; border-top:1px solid var(--dsw-alias-border-l1); font-size:11px; color:var(--dsw-alias-label-secondary); background:var(--dsw-alias-bg-layer-2); }
+.dsh-scr-search-footnote { opacity:.8; }
 
-.dsh-axl-palette-backdrop { position:fixed; inset:0; z-index:80; display:flex; align-items:flex-start; justify-content:center; padding:14vh 16px 16px; background:color-mix(in srgb, var(--dsw-alias-bg-overlay) 60%, transparent); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); animation:dsh-axl-palette-fade .14s ease-out both; }
-.dsh-axl-palette-card { display:flex; flex-direction:column; width:min(600px,100%); max-height:min(64vh,560px); background:var(--dsw-alias-bg-layer-1); color:var(--dsw-alias-label-primary); border:1px solid var(--dsw-alias-border-l2); border-radius:14px; overflow:hidden; box-shadow:0 30px 72px -32px color-mix(in srgb, var(--dsw-alias-bg-overlay) 82%, transparent); animation:dsh-axl-palette-in .16s ease-out both; }
-.dsh-axl-palette-head { display:flex; align-items:center; gap:10px; padding:12px 14px; border-bottom:1px solid var(--dsw-alias-border-l1); }
-.dsh-axl-palette-glyph { font-size:15px; color:var(--dsw-alias-label-secondary); }
-.dsh-axl-palette-input { flex:1; min-width:0; border:0; outline:0; background:transparent; color:var(--dsw-alias-label-primary); font:inherit; font-size:15px; padding:2px 0; }
-.dsh-axl-palette-input::placeholder { color:var(--dsw-alias-label-secondary); }
-.dsh-axl-palette-count { font-size:11px; color:var(--dsw-alias-label-secondary); border:1px solid var(--dsw-alias-border-l1); border-radius:999px; padding:1px 8px; }
-.dsh-axl-palette-list { flex:1; min-height:0; overflow-y:auto; scrollbar-width:thin; padding:6px; display:flex; flex-direction:column; gap:2px; }
-.dsh-axl-palette-group { display:flex; flex-direction:column; gap:1px; padding-bottom:4px; }
-.dsh-axl-palette-grouplabel { padding:8px 10px 4px; font-size:10.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--dsw-alias-label-secondary); }
-.dsh-axl-palette-row { display:flex; align-items:center; gap:9px; padding:8px 10px; border-radius:8px; border:1px solid transparent; cursor:pointer; transition:background-color .16s ease, border-color .16s ease; }
-.dsh-axl-palette-row[data-selected="true"] { background:color-mix(in srgb, var(--dsw-alias-brand-primary) 14%, var(--dsw-alias-bg-layer-2)); border-color:color-mix(in srgb, var(--dsw-alias-brand-primary) 32%, transparent); }
-.dsh-axl-palette-icon { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:6px; color:var(--dsw-alias-label-secondary); background:var(--dsw-alias-bg-layer-2); font-size:13px; flex:none; }
-.dsh-axl-palette-row[data-selected="true"] .dsh-axl-palette-icon { color:var(--dsw-alias-brand-primary); background:color-mix(in srgb, var(--dsw-alias-brand-primary) 16%, transparent); }
-.dsh-axl-palette-rowmain { display:flex; flex-direction:column; gap:1px; min-width:0; }
-.dsh-axl-palette-title { font-size:13.5px; color:var(--dsw-alias-label-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.dsh-axl-palette-hint { font-size:11.5px; color:var(--dsw-alias-label-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.dsh-axl-palette-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; padding:34px 18px; text-align:center; }
-.dsh-axl-palette-emptytitle { font-size:13px; font-weight:600; color:var(--dsw-alias-label-primary); }
-.dsh-axl-palette-emptysub { font-size:12px; color:var(--dsw-alias-label-secondary); }
-.dsh-axl-palette-foot { display:flex; justify-content:flex-end; padding:8px 14px; border-top:1px solid var(--dsw-alias-border-l1); font-size:11px; color:var(--dsw-alias-label-secondary); background:var(--dsw-alias-bg-layer-2); }
+.dsh-scr-palette-backdrop { position:fixed; inset:0; z-index:80; display:flex; align-items:flex-start; justify-content:center; padding:14vh 16px 16px; background:color-mix(in srgb, var(--dsw-alias-bg-overlay) 60%, transparent); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); animation:dsh-scr-palette-fade .14s ease-out both; }
+.dsh-scr-palette-card { display:flex; flex-direction:column; width:min(600px,100%); max-height:min(64vh,560px); background:var(--dsw-alias-bg-layer-1); color:var(--dsw-alias-label-primary); border:1px solid var(--dsw-alias-border-l2); border-radius:14px; overflow:hidden; box-shadow:0 30px 72px -32px color-mix(in srgb, var(--dsw-alias-bg-overlay) 82%, transparent); animation:dsh-scr-palette-in .16s ease-out both; }
+.dsh-scr-palette-head { display:flex; align-items:center; gap:10px; padding:12px 14px; border-bottom:1px solid var(--dsw-alias-border-l1); }
+.dsh-scr-palette-glyph { font-size:15px; color:var(--dsw-alias-label-secondary); }
+.dsh-scr-palette-input { flex:1; min-width:0; border:0; outline:0; background:transparent; color:var(--dsw-alias-label-primary); font:inherit; font-size:15px; padding:2px 0; }
+.dsh-scr-palette-input::placeholder { color:var(--dsw-alias-label-secondary); }
+.dsh-scr-palette-count { font-size:11px; color:var(--dsw-alias-label-secondary); border:1px solid var(--dsw-alias-border-l1); border-radius:999px; padding:1px 8px; }
+.dsh-scr-palette-list { flex:1; min-height:0; overflow-y:auto; scrollbar-width:thin; padding:6px; display:flex; flex-direction:column; gap:2px; }
+.dsh-scr-palette-group { display:flex; flex-direction:column; gap:1px; padding-bottom:4px; }
+.dsh-scr-palette-grouplabel { padding:8px 10px 4px; font-size:10.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--dsw-alias-label-secondary); }
+.dsh-scr-palette-row { display:flex; align-items:center; gap:9px; padding:8px 10px; border-radius:8px; border:1px solid transparent; cursor:pointer; transition:background-color .16s ease, border-color .16s ease; }
+.dsh-scr-palette-row[data-selected="true"] { background:color-mix(in srgb, var(--dsw-alias-brand-primary) 14%, var(--dsw-alias-bg-layer-2)); border-color:color-mix(in srgb, var(--dsw-alias-brand-primary) 32%, transparent); }
+.dsh-scr-palette-icon { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:6px; color:var(--dsw-alias-label-secondary); background:var(--dsw-alias-bg-layer-2); font-size:13px; flex:none; }
+.dsh-scr-palette-row[data-selected="true"] .dsh-scr-palette-icon { color:var(--dsw-alias-brand-primary); background:color-mix(in srgb, var(--dsw-alias-brand-primary) 16%, transparent); }
+.dsh-scr-palette-rowmain { display:flex; flex-direction:column; gap:1px; min-width:0; }
+.dsh-scr-palette-title { font-size:13.5px; color:var(--dsw-alias-label-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.dsh-scr-palette-hint { font-size:11.5px; color:var(--dsw-alias-label-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.dsh-scr-palette-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; padding:34px 18px; text-align:center; }
+.dsh-scr-palette-emptytitle { font-size:13px; font-weight:600; color:var(--dsw-alias-label-primary); }
+.dsh-scr-palette-emptysub { font-size:12px; color:var(--dsw-alias-label-secondary); }
+.dsh-scr-palette-foot { display:flex; justify-content:flex-end; padding:8px 14px; border-top:1px solid var(--dsw-alias-border-l1); font-size:11px; color:var(--dsw-alias-label-secondary); background:var(--dsw-alias-bg-layer-2); }
 
-@keyframes dsh-axl-search-rise { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
-@keyframes dsh-axl-search-row-in { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
-@keyframes dsh-axl-palette-fade { from { opacity:0; } to { opacity:1; } }
-@keyframes dsh-axl-palette-in { from { opacity:0; transform:translateY(-8px) scale(.986); } to { opacity:1; transform:translateY(0) scale(1); } }
+@keyframes dsh-scr-search-rise { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+@keyframes dsh-scr-search-row-in { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+@keyframes dsh-scr-palette-fade { from { opacity:0; } to { opacity:1; } }
+@keyframes dsh-scr-palette-in { from { opacity:0; transform:translateY(-8px) scale(.986); } to { opacity:1; transform:translateY(0) scale(1); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .dsh-axl-search-panel,
-  .dsh-axl-search-row,
-  .dsh-axl-search-close,
-  .dsh-axl-palette-backdrop,
-  .dsh-axl-palette-card,
-  .dsh-axl-palette-row { animation:none !important; transition:none !important; }
+  .dsh-scr-search-panel,
+  .dsh-scr-search-row,
+  .dsh-scr-search-close,
+  .dsh-scr-palette-backdrop,
+  .dsh-scr-palette-card,
+  .dsh-scr-palette-row { animation:none !important; transition:none !important; }
 }
 `
 
@@ -668,5 +668,5 @@ const SEARCH_CSS = `
 try {
   CSS_CHUNKS.push(SEARCH_CSS)
 } catch (error) {
-  console.warn('[dsh-alexandrie] SEARCH_CSS was not added to CSS_CHUNKS', error)
+  console.warn('[dsh-scriptorium] SEARCH_CSS was not added to CSS_CHUNKS', error)
 }

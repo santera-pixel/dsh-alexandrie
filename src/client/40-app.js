@@ -20,10 +20,10 @@ function slugify(text) {
 function EmptyState({ icon, title, hint, action }) {
   return h(
     'div',
-    { className: 'dsh-axl-empty' },
-    h('div', { className: 'dsh-axl-empty-icon' }, h(Icon, { name: icon, size: 22 })),
-    h('div', { className: 'dsh-axl-empty-title' }, title),
-    hint ? h('div', { className: 'dsh-axl-empty-hint' }, hint) : null,
+    { className: 'dsh-scr-empty' },
+    h('div', { className: 'dsh-scr-empty-icon' }, h(Icon, { name: icon, size: 22 })),
+    h('div', { className: 'dsh-scr-empty-title' }, title),
+    hint ? h('div', { className: 'dsh-scr-empty-hint' }, hint) : null,
     action || null,
   )
 }
@@ -34,7 +34,7 @@ function DocumentList({ nodes, snapshot, onOpen, actions, emptyHint, showRestore
   }
   return h(
     'div',
-    { className: 'dsh-axl-list', style: { padding: '14px 18px' } },
+    { className: 'dsh-scr-list', style: { padding: '14px 18px' } },
     nodes.map((node) => {
       const stats = markdownStats(node.content || '')
       const workspace = model.workspaceById(snapshot, node.workspaceId)
@@ -42,7 +42,7 @@ function DocumentList({ nodes, snapshot, onOpen, actions, emptyHint, showRestore
         'div',
         {
           key: node.id,
-          className: 'dsh-axl-list-row',
+          className: 'dsh-scr-list-row',
           role: 'button',
           tabIndex: 0,
           onClick: () => (showRestore ? null : onOpen(node.id)),
@@ -50,14 +50,14 @@ function DocumentList({ nodes, snapshot, onOpen, actions, emptyHint, showRestore
             if (event.key === 'Enter' && !showRestore) onOpen(node.id)
           },
         },
-        h('span', { className: 'dsh-axl-tree-kind' }, h(Icon, { name: node.icon || 'doc', size: 15 })),
+        h('span', { className: 'dsh-scr-tree-kind' }, h(Icon, { name: node.icon || 'doc', size: 15 })),
         h(
           'div',
-          { className: 'dsh-axl-list-main' },
-          h('span', { className: 'dsh-axl-list-title' }, node.title),
+          { className: 'dsh-scr-list-main' },
+          h('span', { className: 'dsh-scr-list-title' }, node.title),
           h(
             'span',
-            { className: 'dsh-axl-list-sub' },
+            { className: 'dsh-scr-list-sub' },
             (workspace ? workspace.name + ' Â· ' : '') +
               model.statusLabelOf(node.status) +
               ' Â· ' +
@@ -68,7 +68,7 @@ function DocumentList({ nodes, snapshot, onOpen, actions, emptyHint, showRestore
         ),
         h(
           'span',
-          { className: 'dsh-axl-list-actions' },
+          { className: 'dsh-scr-list-actions' },
           showRestore
             ? [
                 h(IconButton, { key: 'r', icon: 'restore', label: 'Restore', onClick: () => actions.restoreNode(node.id) }),
@@ -94,24 +94,24 @@ function FolderView({ snapshot, node, actions }) {
   const children = model.childrenOf(snapshot, node.workspaceId, node.id)
   return h(
     'div',
-    { className: 'dsh-axl-view' },
+    { className: 'dsh-scr-view' },
     h(
       'div',
-      { className: 'dsh-axl-doc-head' },
+      { className: 'dsh-scr-doc-head' },
       h('input', {
-        className: 'dsh-axl-doc-title',
+        className: 'dsh-scr-doc-title',
         value: node.title,
         onChange: (event) => actions.renameNode(node.id, event.target.value),
       }),
       h(
         'div',
-        { className: 'dsh-axl-doc-meta' },
+        { className: 'dsh-scr-doc-meta' },
         h('span', null, children.length + ' item(s)'),
-        h('span', { className: 'dsh-axl-doc-meta-sep' }, 'Â·'),
+        h('span', { className: 'dsh-scr-doc-meta-sep' }, 'Â·'),
         h('span', null, 'Edited ' + model.relativeTime(node.updatedAt)),
-        h('span', { className: 'dsh-axl-spacer', style: { flex: '1 1 auto' } }),
-        h('button', { type: 'button', className: 'dsh-axl-btn', onClick: () => actions.createFolder(node.id) }, h(Icon, { name: 'folder', size: 14 }), 'Folder'),
-        h('button', { type: 'button', className: 'dsh-axl-btn is-primary', onClick: () => actions.createDoc(node.id) }, h(Icon, { name: 'plus', size: 14 }), 'Document'),
+        h('span', { className: 'dsh-scr-spacer', style: { flex: '1 1 auto' } }),
+        h('button', { type: 'button', className: 'dsh-scr-btn', onClick: () => actions.createFolder(node.id) }, h(Icon, { name: 'folder', size: 14 }), 'Folder'),
+        h('button', { type: 'button', className: 'dsh-scr-btn is-primary', onClick: () => actions.createDoc(node.id) }, h(Icon, { name: 'plus', size: 14 }), 'Document'),
       ),
     ),
     h(DocumentList, {
@@ -353,7 +353,7 @@ function App({ store }) {
       notify('Document exported', 'success')
     },
     exportArchive: () => {
-      downloadText('alexandrie-archive-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(snapshot, null, 2))
+      downloadText('scriptorium-archive-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(snapshot, null, 2))
       notify('JSON archive exported', 'success')
     },
     exportZip: async () => {
@@ -364,7 +364,7 @@ function App({ store }) {
           const detail = await response.text()
           throw new Error(detail === '' ? 'HTTP ' + response.status : detail)
         }
-        downloadBlob('alexandrie-' + new Date().toISOString().slice(0, 10) + '.zip', await response.blob())
+        downloadBlob('scriptorium-' + new Date().toISOString().slice(0, 10) + '.zip', await response.blob())
         notify('ZIP exported: notes, media and metadata', 'success')
       } catch (error) {
         notify('Export failed: ' + ((error && error.message) || String(error)), 'error')
@@ -547,14 +547,14 @@ function App({ store }) {
 
   const renderMain = () => {
     if (store.state.status === 'loading') {
-      return h('div', { className: 'dsh-axl-skeleton' }, [0, 1, 2, 3].map((index) => h('div', { key: index, className: 'dsh-axl-skeleton-line' })))
+      return h('div', { className: 'dsh-scr-skeleton' }, [0, 1, 2, 3].map((index) => h('div', { key: index, className: 'dsh-scr-skeleton-line' })))
     }
     if (store.state.status === 'error') {
       return h(EmptyState, {
         icon: 'warning',
         title: 'Could not load your knowledge base',
         hint: store.state.error || 'The host store did not respond.',
-        action: h('button', { type: 'button', className: 'dsh-axl-btn is-primary', onClick: () => store.load() }, 'Retry'),
+        action: h('button', { type: 'button', className: 'dsh-scr-btn is-primary', onClick: () => store.load() }, 'Retry'),
       })
     }
     if (snapshot.workspaces.length === 0) {
@@ -567,7 +567,7 @@ function App({ store }) {
             : 'Notebooks mirror the projects in your Harness workspace list. Create a project there, then sync.',
           action: h(
             'button',
-            { type: 'button', className: 'dsh-axl-btn is-primary', disabled: projectLoading, onClick: () => actions.syncProjects() },
+            { type: 'button', className: 'dsh-scr-btn is-primary', disabled: projectLoading, onClick: () => actions.syncProjects() },
             h(Icon, { name: 'refresh', size: 14 }),
             projectLoading ? 'Syncing…' : 'Sync projects',
           ),
@@ -577,7 +577,7 @@ function App({ store }) {
         icon: 'book',
         title: 'Create your first workspace',
         hint: 'Workspaces group documents, folders and boards. Everything is stored locally in your DSH home.',
-        action: h('button', { type: 'button', className: 'dsh-axl-btn is-primary', onClick: () => actions.createWorkspace('My knowledge base') }, h(Icon, { name: 'plus', size: 14 }), 'New workspace'),
+        action: h('button', { type: 'button', className: 'dsh-scr-btn is-primary', onClick: () => actions.createWorkspace('My knowledge base') }, h(Icon, { name: 'plus', size: 14 }), 'New workspace'),
       })
     }
     if (view === 'tag') {
@@ -589,17 +589,17 @@ function App({ store }) {
             )
       return h(
         'div',
-        { className: 'dsh-axl-view' },
+        { className: 'dsh-scr-view' },
         h(
           'div',
-          { className: 'dsh-axl-doc-head' },
-          h('div', { className: 'dsh-axl-doc-title', style: { fontSize: 20 } }, tagFilter === null ? 'Tag' : '#' + tagFilter),
+          { className: 'dsh-scr-doc-head' },
+          h('div', { className: 'dsh-scr-doc-title', style: { fontSize: 20 } }, tagFilter === null ? 'Tag' : '#' + tagFilter),
           h(
             'div',
-            { className: 'dsh-axl-doc-meta' },
+            { className: 'dsh-scr-doc-meta' },
             h('span', null, tagged.length + ' tagged document(s)'),
-            h('span', { className: 'dsh-axl-doc-meta-sep' }, 'Â·'),
-            h('button', { type: 'button', className: 'dsh-axl-btn', onClick: () => actions.selectTag(tagFilter) }, 'Clear filter'),
+            h('span', { className: 'dsh-scr-doc-meta-sep' }, 'Â·'),
+            h('button', { type: 'button', className: 'dsh-scr-btn', onClick: () => actions.selectTag(tagFilter) }, 'Clear filter'),
           ),
         ),
         h(DocumentList, {
@@ -612,7 +612,7 @@ function App({ store }) {
       )
     }
     if (view === 'media') {
-      return h('div', { className: 'dsh-axl-view' }, h(MediaLibrary, { snapshot, actions, onPreview: actions.openPreview }))
+      return h('div', { className: 'dsh-scr-view' }, h(MediaLibrary, { snapshot, actions, onPreview: actions.openPreview }))
     }
     if (view === 'board') {
       return h(KanbanBoard, {
@@ -626,7 +626,7 @@ function App({ store }) {
       })
     }
     if (view === 'canvas') {
-      return h('div', { className: 'dsh-axl-view dsh-axl-view-fill' }, h(MediaCanvas, {
+      return h('div', { className: 'dsh-scr-view dsh-scr-view-fill' }, h(MediaCanvas, {
         store,
         snapshot,
         workspaceId: ui.activeWorkspaceId || undefined,
@@ -636,7 +636,7 @@ function App({ store }) {
       }))
     }
     if (view === 'graph') {
-      return h('div', { className: 'dsh-axl-view dsh-axl-view-fill' }, h(MindGraph, {
+      return h('div', { className: 'dsh-scr-view dsh-scr-view-fill' }, h(MindGraph, {
         store,
         snapshot,
         workspaceId: ui.activeWorkspaceId || undefined,
@@ -648,16 +648,16 @@ function App({ store }) {
     if (view === 'favorites') {
       return h(
         'div',
-        { className: 'dsh-axl-view' },
+        { className: 'dsh-scr-view' },
         h(
           'div',
-          { className: 'dsh-axl-doc-head' },
-          h('div', { className: 'dsh-axl-doc-title', style: { fontSize: 20 } }, 'Favourites'),
+          { className: 'dsh-scr-doc-head' },
+          h('div', { className: 'dsh-scr-doc-title', style: { fontSize: 20 } }, 'Favourites'),
           h(
             'div',
-            { className: 'dsh-axl-doc-meta' },
+            { className: 'dsh-scr-doc-meta' },
             h('span', null, filteredFavorites.length + ' starred document(s)'),
-            tagFilter === null ? null : h('span', { className: 'dsh-axl-chip is-active' }, '#' + tagFilter),
+            tagFilter === null ? null : h('span', { className: 'dsh-scr-chip is-active' }, '#' + tagFilter),
           ),
         ),
         h(DocumentList, { nodes: filteredFavorites, snapshot, actions, onOpen: actions.openNode, emptyHint: 'Star a document with the star icon to pin it here.' }),
@@ -666,17 +666,17 @@ function App({ store }) {
     if (view === 'trash') {
       return h(
         'div',
-        { className: 'dsh-axl-view' },
+        { className: 'dsh-scr-view' },
         h(
           'div',
-          { className: 'dsh-axl-doc-head' },
-          h('div', { className: 'dsh-axl-doc-title', style: { fontSize: 20 } }, 'Trash'),
+          { className: 'dsh-scr-doc-head' },
+          h('div', { className: 'dsh-scr-doc-title', style: { fontSize: 20 } }, 'Trash'),
           h(
             'div',
-            { className: 'dsh-axl-doc-meta' },
+            { className: 'dsh-scr-doc-meta' },
             h('span', null, trashed.length + ' document(s)'),
-            h('span', { className: 'dsh-axl-spacer', style: { flex: '1 1 auto' } }),
-            h('button', { type: 'button', className: 'dsh-axl-btn is-danger', disabled: trashed.length === 0, onClick: () => { actions.emptyTrash(); notify('Trash emptied', 'success') } }, h(Icon, { name: 'trash', size: 14 }), 'Empty trash'),
+            h('span', { className: 'dsh-scr-spacer', style: { flex: '1 1 auto' } }),
+            h('button', { type: 'button', className: 'dsh-scr-btn is-danger', disabled: trashed.length === 0, onClick: () => { actions.emptyTrash(); notify('Trash emptied', 'success') } }, h(Icon, { name: 'trash', size: 14 }), 'Empty trash'),
           ),
         ),
         h(DocumentList, { nodes: trashed, snapshot, actions, onOpen: actions.openNode, showRestore: true, emptyHint: 'Deleted documents stay here until you empty the trash.' }),
@@ -694,7 +694,7 @@ function App({ store }) {
         icon: 'doc',
         title: 'Select a document',
         hint: 'Choose a note from the sidebar, or create a new document to start writing.',
-        action: h('button', { type: 'button', className: 'dsh-axl-btn is-primary', onClick: () => actions.createDoc(null) }, h(Icon, { name: 'plus', size: 14 }), 'New document'),
+        action: h('button', { type: 'button', className: 'dsh-scr-btn is-primary', onClick: () => actions.createDoc(null) }, h(Icon, { name: 'plus', size: 14 }), 'New document'),
       })
     }
     if (activeNode.kind === 'folder') return h(FolderView, { snapshot, node: activeNode, actions })
@@ -703,7 +703,7 @@ function App({ store }) {
         icon: 'trash',
         title: 'This document is in the trash',
         hint: 'Restore it to keep editing, or delete it permanently.',
-        action: h('button', { type: 'button', className: 'dsh-axl-btn is-primary', onClick: () => actions.restoreNode(activeNode.id) }, h(Icon, { name: 'restore', size: 14 }), 'Restore'),
+        action: h('button', { type: 'button', className: 'dsh-scr-btn is-primary', onClick: () => actions.restoreNode(activeNode.id) }, h(Icon, { name: 'restore', size: 14 }), 'Restore'),
       })
     }
     return h(DocumentEditor, { store, snapshot, node: activeNode, ui, actions })
@@ -711,48 +711,48 @@ function App({ store }) {
 
   return h(
     'div',
-    { className: 'dsh-axl-root' },
+    { className: 'dsh-scr-root' },
     h(
       'header',
-      { className: 'dsh-axl-header' },
+      { className: 'dsh-scr-header' },
       h(
         'div',
-        { className: 'dsh-axl-brand' },
-        h('span', { className: 'dsh-axl-brand-mark' }, h(Icon, { name: 'book', size: 15 })),
-        h('span', { className: 'dsh-axl-brand-name' }, 'Alexandrie'),
+        { className: 'dsh-scr-brand' },
+        h('span', { className: 'dsh-scr-brand-mark' }, h(Icon, { name: 'book', size: 15 })),
+        h('span', { className: 'dsh-scr-brand-name' }, 'Scriptorium'),
       ),
       h(IconButton, { icon: 'sidebar', label: 'Toggle sidebar', onClick: () => actions.patchUi({ sidebarCollapsed: !ui.sidebarCollapsed }) }),
       h(
         'div',
-        { className: 'dsh-axl-crumbs' },
+        { className: 'dsh-scr-crumbs' },
         activeWorkspace
           ? h(
               'span',
-              { className: 'dsh-axl-crumb', title: activeWorkspace.path || activeWorkspace.name },
-              activeWorkspace.projectMissing === true ? h('span', { className: 'dsh-axl-ws-chip' }, 'missing') : null,
+              { className: 'dsh-scr-crumb', title: activeWorkspace.path || activeWorkspace.name },
+              activeWorkspace.projectMissing === true ? h('span', { className: 'dsh-scr-ws-chip' }, 'missing') : null,
               activeWorkspace.name,
             )
           : null,
-        activeNode && activeWorkspace && activeNode.kind === 'doc' ? h('span', { className: 'dsh-axl-crumb-sep' }, '/') : null,
-        activeNode && activeNode.kind === 'doc' ? h('span', { className: 'dsh-axl-crumb' }, activeNode.title) : null,
+        activeNode && activeWorkspace && activeNode.kind === 'doc' ? h('span', { className: 'dsh-scr-crumb-sep' }, '/') : null,
+        activeNode && activeNode.kind === 'doc' ? h('span', { className: 'dsh-scr-crumb' }, activeNode.title) : null,
       ),
       h(
         'button',
-        { type: 'button', className: 'dsh-axl-searchbtn', onClick: () => setSearchOpen(true) },
+        { type: 'button', className: 'dsh-scr-searchbtn', onClick: () => setSearchOpen(true) },
         h(Icon, { name: 'search', size: 13 }),
         h('span', { style: { flex: '1 1 auto' } }, 'Search documentsâ€¦'),
-        h('span', { className: 'dsh-axl-kbd' }, 'Ctrl K'),
+        h('span', { className: 'dsh-scr-kbd' }, 'Ctrl K'),
       ),
       h(
         'div',
-        { className: 'dsh-axl-seg' },
+        { className: 'dsh-scr-seg' },
         VIEWS.map((entry) =>
           h(
             'button',
             {
               key: entry.id,
               type: 'button',
-              className: cx('dsh-axl-seg-btn', view === entry.id && 'is-active'),
+              className: cx('dsh-scr-seg-btn', view === entry.id && 'is-active'),
               onClick: () => setView(entry.id),
             },
             h(Icon, { name: entry.icon, size: 12 }),
@@ -766,7 +766,7 @@ function App({ store }) {
     ),
     h(
       'div',
-      { className: 'dsh-axl-body', 'data-tick': tick },
+      { className: 'dsh-scr-body', 'data-tick': tick },
       h(Sidebar, {
         snapshot,
         ui,
@@ -779,14 +779,14 @@ function App({ store }) {
         onSync: () => actions.syncProjects(),
         onBind: actions.bindWorkspace,
       }),
-      h('main', { className: 'dsh-axl-main' }, h('div', { className: 'dsh-axl-main-scroll' }, renderMain())),
+      h('main', { className: 'dsh-scr-main' }, h('div', { className: 'dsh-scr-main-scroll' }, renderMain())),
     ),
 
     searchOpen
       ? h(
           'div',
           {
-            className: 'dsh-axl-backdrop',
+            className: 'dsh-scr-backdrop',
             onMouseDown: (event) => {
               if (event.target === event.currentTarget) setSearchOpen(false)
             },
@@ -810,11 +810,11 @@ function App({ store }) {
 
     h(
       'div',
-      { className: 'dsh-axl-toast-stack' },
+      { className: 'dsh-scr-toast-stack' },
       toasts.map((toast) =>
         h(
           'div',
-          { key: toast.id, className: cx('dsh-axl-toast', toast.kind === 'error' && 'is-error', toast.kind === 'success' && 'is-success') },
+          { key: toast.id, className: cx('dsh-scr-toast', toast.kind === 'error' && 'is-error', toast.kind === 'success' && 'is-success') },
           h(Icon, { name: toast.kind === 'error' ? 'warning' : toast.kind === 'success' ? 'check' : 'sparkles', size: 14 }),
           toast.message,
         ),

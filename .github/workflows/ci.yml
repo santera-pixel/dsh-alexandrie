@@ -35,9 +35,13 @@ jobs:
 
       - name: Published tarball ships no dev-only files
         run: |
-          npm pack --dry-run --json --ignore-scripts --silent > pack.json
+          # `npm pack` can print lifecycle banners before the JSON, so parse from the first "[".
+          npm pack --dry-run --json --ignore-scripts > pack.raw
           node -e "
-            const [p] = require('./pack.json');
+            const fs = require('fs');
+            const raw = fs.readFileSync('pack.raw', 'utf8');
+            const json = raw.slice(raw.indexOf('['), raw.lastIndexOf(']') + 1);
+            const [p] = JSON.parse(json);
             const devOnly = p.files
               .map(f => f.path)
               .filter(f => /^(tests|node_modules)\//.test(f) || /\.tgz$/.test(f));
@@ -47,4 +51,4 @@ jobs:
             }
             console.log('tarball ok:', p.files.length, 'files, no tests');
           "
-          rm pack.json
+          rm pack.raw

@@ -1,27 +1,27 @@
-# dsh-alexandrie
+# dsh-scriptorium
 
-[![CI](https://github.com/santera-pixel/dsh-alexandrie/actions/workflows/ci.yml/badge.svg)](https://github.com/santera-pixel/dsh-alexandrie/actions/workflows/ci.yml)
+[![CI](https://github.com/santera-pixel/dsh-scriptorium/actions/workflows/ci.yml/badge.svg)](https://github.com/santera-pixel/dsh-scriptorium/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Topic: dsh-plugin](https://img.shields.io/badge/topic-dsh--plugin-0e7490)](https://github.com/topics/dsh-plugin)
 
-<img src="https://raw.githubusercontent.com/santera-pixel/dsh-alexandrie/main/docs/media/hero.png" alt="Alexandrie: a project notebook inside the DeepSeek Harness — notes, screenshots, a canvas and a mind graph in one panel" width="100%">
+<img src="https://raw.githubusercontent.com/santera-pixel/dsh-scriptorium/main/docs/media/hero.png" alt="Scriptorium: a project notebook inside the DeepSeek Harness — notes, screenshots, a canvas and a mind graph in one panel" width="100%">
 
-An Alexandrie-style knowledge base inside the DeepSeek Harness Web GUI: project-based workspaces,
-nested documents, a Markdown editor with live preview, full-text search, a command palette, a
+Scriptorium is a project knowledge base inside the DeepSeek Harness Web GUI: workspaces bound to
+Harness projects, nested documents, a Markdown editor with live preview, full-text search, a command palette, a
 kanban board, a free-form media canvas, an Obsidian-style mind graph, tags, favourites, trash and
 ZIP/JSON archives — all stored in one JSON file on the host that this plugin owns.
 
-The panel lives in the sidebar (book icon, "Alexandrie"). Everything else is one keystroke away.
+The panel lives in the sidebar (book icon, "Scriptorium"). Everything else is one keystroke away.
 
 ## What it looks like
 
 | | |
 | --- | --- |
-| <img src="https://raw.githubusercontent.com/santera-pixel/dsh-alexandrie/main/docs/media/workspace.png" alt="Documents view: note tree on the left, Markdown editor and live preview in the middle"> | <img src="https://raw.githubusercontent.com/santera-pixel/dsh-alexandrie/main/docs/media/media.png" alt="Media sandbox: every attachment in the project as a preview card"> |
+| <img src="https://raw.githubusercontent.com/santera-pixel/dsh-scriptorium/main/docs/media/workspace.png" alt="Documents view: note tree on the left, Markdown editor and live preview in the middle"> | <img src="https://raw.githubusercontent.com/santera-pixel/dsh-scriptorium/main/docs/media/media.png" alt="Media sandbox: every attachment in the project as a preview card"> |
 | **Documents** — nested notes, split editor and a live preview, tags and status in the header. | **Media sandbox** — every screenshot, PDF and clip in the project, filterable by kind. |
-| <img src="https://raw.githubusercontent.com/santera-pixel/dsh-alexandrie/main/docs/media/canvas.png" alt="Media canvas: attachment cards arranged beside the notes that own them, joined by edges"> | <img src="https://raw.githubusercontent.com/santera-pixel/dsh-alexandrie/main/docs/media/graph.png" alt="Mind graph: notes as nodes and wiki links as edges, auto-fitted to the panel"> |
+| <img src="https://raw.githubusercontent.com/santera-pixel/dsh-scriptorium/main/docs/media/canvas.png" alt="Media canvas: attachment cards arranged beside the notes that own them, joined by edges"> | <img src="https://raw.githubusercontent.com/santera-pixel/dsh-scriptorium/main/docs/media/graph.png" alt="Mind graph: notes as nodes and wiki links as edges, auto-fitted to the panel"> |
 | **Canvas** — attachments become cards beside the note that owns them, joined by an edge. | **Mind graph** — notes are nodes, `[[wiki links]]` are edges; opens fitted to the panel. |
-| <img src="https://raw.githubusercontent.com/santera-pixel/dsh-alexandrie/main/docs/media/board.png" alt="Board view: draft, active and done columns built from note statuses"> | <img src="https://raw.githubusercontent.com/santera-pixel/dsh-alexandrie/main/docs/media/search.png" alt="Command palette: fuzzy list of every action, grouped by Create, Projects, Navigate and Data"> |
+| <img src="https://raw.githubusercontent.com/santera-pixel/dsh-scriptorium/main/docs/media/board.png" alt="Board view: draft, active and done columns built from note statuses"> | <img src="https://raw.githubusercontent.com/santera-pixel/dsh-scriptorium/main/docs/media/search.png" alt="Command palette: fuzzy list of every action, grouped by Create, Projects, Navigate and Data"> |
 | **Board** — Draft / Active / Done, straight from each note's status. | **Command palette** — `Ctrl+K`, every action one fuzzy query away. |
 
 **In practice:**
@@ -56,11 +56,12 @@ Keyboard: `Ctrl+K` palette, `Ctrl+N` new document, `Ctrl+S` save, `Ctrl+B`/`Ctrl
 
 ## Storage
 
-- Documents: `<DSH_HOME>/alexandrie/data.json` (atomic tmp+rename writes, one serialized queue,
+- Documents: `<DSH_HOME>/scriptorium/data.json` (atomic tmp+rename writes, one serialized queue,
   revision counter; oversized or malformed snapshots are rejected with a 400).
-- Attachments: `<DSH_HOME>/alexandrie/media/<id>` plus a `<id>.json` sidecar with name/mime/size.
-  `DSH_HOME` defaults to `~/.dsh`.
-- Layout copy: `<DSH_HOME>/alexandrie/layout.json` holds only `canvas` + `graph` and is written
+- Attachments: `<DSH_HOME>/scriptorium/media/<id>` plus a `<id>.json` sidecar with name/mime/size.
+  `DSH_HOME` defaults to `~/.dsh`. A directory left by the pre-rename build (`<DSH_HOME>/alexandrie/`)
+  is moved into place on first mount, so existing notes, attachments and layout survive the rename.
+- Layout copy: `<DSH_HOME>/scriptorium/layout.json` holds only `canvas` + `graph` and is written
   before `data.json` on every save. A pre-canvas build rebuilds `data.json` from a fixed key list
   and never touches this file, so a downgrade cannot destroy the board: the next load merges the
   layout back (cards whose document was deleted meanwhile are pruned), and the read itself never
@@ -82,7 +83,7 @@ Keyboard: `Ctrl+K` palette, `Ctrl+N` new document, `Ctrl+S` save, `Ctrl+B`/`Ctrl
   same archive imported twice adds nothing twice.
 
 The browser half never touches the disk: it talks to the plugin's own same-origin route
-(`/dsh-alexandrie/*`) with a `{ ok, value }` / `{ ok: false, error: { message } }` envelope, the
+(`/dsh-scriptorium/*`) with a `{ ok, value }` / `{ ok: false, error: { message } }` envelope, the
 same proven pattern as the shipped `dsh-taskboard` plugin.
 
 Host routes: `GET /health`, `GET /state`, `GET /projects`, `POST /save`, `GET /export`,
@@ -90,23 +91,23 @@ Host routes: `GET /health`, `GET /state`, `GET /projects`, `POST /save`, `GET /e
 
 ## Install
 
-Repository: <https://github.com/santera-pixel/dsh-alexandrie>
+Repository: <https://github.com/santera-pixel/dsh-scriptorium>
 
 From npm — the one-step command the DSH Plugin Hub runs:
 
 ```
-dsh plugin --profile web add dsh-alexandrie
+dsh plugin --profile web add dsh-scriptorium
 ```
 
 Straight from GitHub (works before any npm publish; npm runs this package's `prepare` script, so
 the browser bundle is rebuilt during install):
 
 ```
-dsh plugin --profile web add github:santera-pixel/dsh-alexandrie
+dsh plugin --profile web add github:santera-pixel/dsh-scriptorium
 ```
 
 From the Web GUI: **Settings → Plugins** and install from a package, or let the agent call
-`plugin_manager` with `install_bundle` and target `dsh-alexandrie` (or a path to a local
+`plugin_manager` with `install_bundle` and target `dsh-scriptorium` (or a path to a local
 checkout). Whichever route installs it, a page refresh is enough for a client change; the host
 half (`lib/index.js`) is ESM and only reloads on a harness restart.
 
@@ -116,10 +117,10 @@ After installing, open the book icon in the sidebar.
 
 - DeepSeek Harness with the Web profile; the client half declares `platform: "web"` and injects
   only the `slots` service. The host half injects `webServer` and registers routes under
-  `/dsh-alexandrie`.
+  `/dsh-scriptorium`.
 - Node.js `>=22` (the host half is dependency-free ESM).
 - No outbound network calls, no telemetry, no third-party embeds.
-- Writes only under `<DSH_HOME>/alexandrie/` (`data.json`, `layout.json`, `media/`). Reads
+- Writes only under `<DSH_HOME>/scriptorium/` (`data.json`, `layout.json`, `media/`). Reads
   `<DSH_HOME>/storages/workspace.json` read-only to mirror the Harness project list.
 - Caps: 12 MB per attachment, 24 MB per snapshot.
 
@@ -165,13 +166,14 @@ what the plugin hub installs — ships without them, and the npm tarball never i
 | `tests/compat.mjs` | a pre-canvas `data.json` survives load→save→reload verbatim (old bytes unchanged, 95-byte block overhead, no drift); unknown top-level blocks carried through; no prototype pollution | 7 |
 | `tests/downgrade.mjs` | a pre-canvas build's fixed-key rewrite of `data.json` is recovered from the layout copy on the next load: positions/sizes/links restored, document edits kept, deleted-document cards pruned, idempotent cycles, export carries the layout | 7 |
 | `tests/projects.mjs` | project sync (create/adopt/rename/missing/idempotent), unsafe ids ignored, linking and merge-into-existing semantics, store project state success/failure | 11 |
+| `tests/migrate.mjs` | the pre-rename data directory is moved into place on mount with documents, attachments, layout copy and revision counter intact; a second mount repeats nothing | 1 |
 | `tests/http.mjs` | the real host half on a throwaway server: state/save, project mirror + malformed file, media, ZIP export/import including the board round-trip | 17 |
 | `tests/export.mjs` | Markdown and JSON download naming and payload | 3 |
 | `tests/gui.mjs` | the built bundle in jsdom against a throwaway host: mount, create, type, preview, Ctrl+K, search, board move, trash/restore, settings, upload→canvas→drag→zoom, graph→connect→filter — asserting on the rendered DOM and on `data.json` | 10 |
 | `tests/battle.mjs` | adversarial pass: 400-operation model fuzz with invariants, hostile canvas payloads, wiki-link abuse, 800-node layout budget, concurrent saves, traversal names, broken archives, 3000-document round-trip | 10 |
 | `tests/live.mjs` | the running harness (health/state/save/conflict/export/projects) | 9 |
 
-245 checks in total (216 node suites, 10 jsdom GUI, 10 adversarial, 9 live).
+245 checks in total (217 node suites, 10 jsdom GUI, 10 adversarial, 9 live).
 
 The suites live in `tests/` on the **dev** branch. `main` — what GitHub shows, what the hub
 installs and what npm publishes — is `dev` minus `tests/`, so a plain checkout of `main` contains

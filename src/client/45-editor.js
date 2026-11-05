@@ -87,14 +87,14 @@ function TagEditor({ node, onAdd, onRemove }) {
   }
   return h(
     'div',
-    { className: 'dsh-axl-chip-wrap', style: { alignItems: 'center' } },
+    { className: 'dsh-scr-chip-wrap', style: { alignItems: 'center' } },
     tags.map((tag) => {
       const hue = model.tagHue(tag)
       return h(
         'span',
         {
           key: tag,
-          className: 'dsh-axl-chip',
+          className: 'dsh-scr-chip',
           style: { background: `hsla(${hue}, 65%, 55%, 0.16)`, color: `hsl(${hue}, 62%, 62%)` },
         },
         '#' + tag,
@@ -102,7 +102,7 @@ function TagEditor({ node, onAdd, onRemove }) {
           'button',
           {
             type: 'button',
-            className: 'dsh-axl-chip-x',
+            className: 'dsh-scr-chip-x',
             title: 'Remove tag',
             onClick: () => onRemove(tag),
           },
@@ -111,7 +111,7 @@ function TagEditor({ node, onAdd, onRemove }) {
       )
     }),
     h('input', {
-      className: 'dsh-axl-input',
+      className: 'dsh-scr-input',
       style: { width: 108, padding: '2px 8px', fontSize: 11.5, borderRadius: 999 },
       placeholder: '+ tag',
       value: draft,
@@ -145,15 +145,15 @@ function EditorToolbar({ textareaRef, onApply, onSave }) {
       }
     })
 
-  const button = (icon, label, action) => h(IconButton, { icon, label, onClick: action, className: 'dsh-axl-tool-btn' })
-  const sep = () => h('span', { key: 'sep' + Math.random(), className: 'dsh-axl-toolbar-sep' })
+  const button = (icon, label, action) => h(IconButton, { icon, label, onClick: action, className: 'dsh-scr-tool-btn' })
+  const sep = () => h('span', { key: 'sep' + Math.random(), className: 'dsh-scr-toolbar-sep' })
 
   return h(
     'div',
-    { className: 'dsh-axl-toolbar' },
+    { className: 'dsh-scr-toolbar' },
     h(
       'div',
-      { className: 'dsh-axl-toolbar-group' },
+      { className: 'dsh-scr-toolbar-group' },
       button('heading', 'Heading', insert('## ')),
       button('bold', 'Bold (Ctrl+B)', () => run((el) => applyWrap(el, '**', '**', 'bold text'))),
       button('italic', 'Italic (Ctrl+I)', () => run((el) => applyWrap(el, '*', '*', 'italic text'))),
@@ -164,7 +164,7 @@ function EditorToolbar({ textareaRef, onApply, onSave }) {
     sep(),
     h(
       'div',
-      { className: 'dsh-axl-toolbar-group' },
+      { className: 'dsh-scr-toolbar-group' },
       button('listUl', 'Bullet list', () => run((el) => applyLinePrefix(el, '- ', false))),
       button('listOl', 'Numbered list', () => run((el) => applyLinePrefix(el, '1. ', true))),
       button('check', 'Task list', () => run((el) => applyLinePrefix(el, '- [ ] ', false))),
@@ -173,15 +173,15 @@ function EditorToolbar({ textareaRef, onApply, onSave }) {
     sep(),
     h(
       'div',
-      { className: 'dsh-axl-toolbar-group' },
+      { className: 'dsh-scr-toolbar-group' },
       button('link', 'Link', insert('[label](https://)', 7)),
       button('image', 'Image', insert('![alt](https://)', 6)),
       button('table', 'Table', insert('\n| Column | Column |\n| --- | --- |\n| Cell | Cell |\n')),
       button('hr', 'Divider', insert('\n\n---\n\n')),
       button('sparkles', 'Callout', insert('\n::: note\nA short note.\n:::\n')),
     ),
-    h('span', { className: 'dsh-axl-spacer' }),
-    h(IconButton, { icon: 'save', label: 'Save now (Ctrl+S)', onClick: onSave, className: 'dsh-axl-tool-btn' }),
+    h('span', { className: 'dsh-scr-spacer' }),
+    h(IconButton, { icon: 'save', label: 'Save now (Ctrl+S)', onClick: onSave, className: 'dsh-scr-tool-btn' }),
   )
 }
 
@@ -291,12 +291,12 @@ function DocumentEditor({ store, snapshot, node, ui, actions }) {
 
   return h(
     'div',
-    { className: 'dsh-axl-editor dsh-axl-view' },
+    { className: 'dsh-scr-editor dsh-scr-view' },
     h(
       'div',
-      { className: 'dsh-axl-doc-head' },
+      { className: 'dsh-scr-doc-head' },
       h('input', {
-        className: 'dsh-axl-doc-title',
+        className: 'dsh-scr-doc-title',
         value: title,
         'aria-label': 'Document title',
         onChange: (event) => setTitle(event.target.value),
@@ -315,26 +315,26 @@ function DocumentEditor({ store, snapshot, node, ui, actions }) {
       }),
       h(
         'div',
-        { className: 'dsh-axl-doc-meta' },
+        { className: 'dsh-scr-doc-meta' },
         trail.length > 0
           ? h(
               'span',
               { style: { display: 'inline-flex', alignItems: 'center', gap: 4 } },
               trail.map((parent, index) =>
                 h('span', { key: parent.id, style: { display: 'inline-flex', alignItems: 'center', gap: 4 } },
-                  index > 0 ? h('span', { className: 'dsh-axl-doc-meta-sep' }, '/') : null,
+                  index > 0 ? h('span', { className: 'dsh-scr-doc-meta-sep' }, '/') : null,
                   h(Icon, { name: parent.icon || 'folder', size: 12 }),
                   parent.title,
                 ),
               ),
-              h('span', { className: 'dsh-axl-doc-meta-sep' }, '/'),
+              h('span', { className: 'dsh-scr-doc-meta-sep' }, '/'),
             )
           : null,
         h(
           'button',
           {
             type: 'button',
-            className: 'dsh-axl-status-pill',
+            className: 'dsh-scr-status-pill',
             title: 'Cycle status',
             style: { color: model.statusTokenOf(node.status) },
             onClick: () => {
@@ -343,24 +343,24 @@ function DocumentEditor({ store, snapshot, node, ui, actions }) {
               actions.setStatus(node.id, order[(index + 1) % order.length])
             },
           },
-          h('span', { className: 'dsh-axl-status-dot' }),
+          h('span', { className: 'dsh-scr-status-dot' }),
           model.statusLabelOf(node.status),
         ),
-        h('span', { className: 'dsh-axl-doc-meta-sep' }, '·'),
+        h('span', { className: 'dsh-scr-doc-meta-sep' }, '·'),
         h('span', null, 'Edited ' + model.relativeTime(node.updatedAt)),
-        h('span', { className: 'dsh-axl-doc-meta-sep' }, '·'),
+        h('span', { className: 'dsh-scr-doc-meta-sep' }, '·'),
         h('span', null, stats.words + ' words'),
-        h('span', { className: 'dsh-axl-doc-meta-sep' }, '·'),
+        h('span', { className: 'dsh-scr-doc-meta-sep' }, '·'),
         h('span', null, stats.minutes + ' min read'),
-        h('span', { className: 'dsh-axl-spacer', style: { flex: '1 1 auto' } }),
-        h('span', { className: 'dsh-axl-seg' },
+        h('span', { className: 'dsh-scr-spacer', style: { flex: '1 1 auto' } }),
+        h('span', { className: 'dsh-scr-seg' },
           EDITOR_MODES.map((entry) =>
             h(
               'button',
               {
                 key: entry.id,
                 type: 'button',
-                className: cx('dsh-axl-seg-btn', mode === entry.id && 'is-active'),
+                className: cx('dsh-scr-seg-btn', mode === entry.id && 'is-active'),
                 onClick: () => actions.patchSettings({ editorMode: entry.id }),
               },
               h(Icon, { name: entry.icon, size: 12 }),
@@ -379,19 +379,19 @@ function DocumentEditor({ store, snapshot, node, ui, actions }) {
       ),
       h(
         'div',
-        { className: 'dsh-axl-doc-meta' },
+        { className: 'dsh-scr-doc-meta' },
         h(TagEditor, {
           node,
           onAdd: (tag) => actions.addTag(node.id, tag),
           onRemove: (tag) => actions.removeTag(node.id, tag),
         }),
-        h('span', { className: 'dsh-axl-spacer', style: { flex: '1 1 auto' } }),
+        h('span', { className: 'dsh-scr-spacer', style: { flex: '1 1 auto' } }),
         h(
           'span',
-          { className: 'dsh-axl-save-state' },
+          { className: 'dsh-scr-save-state' },
           h('span', {
             className: cx(
-              'dsh-axl-save-dot',
+              'dsh-scr-save-dot',
               store.state.saveState === 'saving' && 'is-saving',
               store.state.saveState === 'saved' && 'is-saved',
               store.state.saveState === 'error' && 'is-error',
@@ -411,15 +411,15 @@ function DocumentEditor({ store, snapshot, node, ui, actions }) {
     }),
     h(
       'div',
-      { className: 'dsh-axl-panes' },
+      { className: 'dsh-scr-panes' },
       mode !== 'preview'
         ? h(
             'div',
-            { className: cx('dsh-axl-pane', mode === 'split' ? 'is-edit' : 'is-full') },
-            mode === 'split' ? h('div', { className: 'dsh-axl-pane-label' }, 'Markdown') : null,
+            { className: cx('dsh-scr-pane', mode === 'split' ? 'is-edit' : 'is-full') },
+            mode === 'split' ? h('div', { className: 'dsh-scr-pane-label' }, 'Markdown') : null,
             h('textarea', {
               ref: textareaRef,
-              className: 'dsh-axl-textarea',
+              className: 'dsh-scr-textarea',
               value: content,
               spellCheck: true,
               placeholder: 'Start writing in Markdown…',
@@ -434,25 +434,25 @@ function DocumentEditor({ store, snapshot, node, ui, actions }) {
       mode !== 'write'
         ? h(
             'div',
-            { className: cx('dsh-axl-pane', mode === 'split' ? 'is-full' : 'is-full') },
-            mode === 'split' ? h('div', { className: 'dsh-axl-pane-label' }, 'Preview') : null,
+            { className: cx('dsh-scr-pane', mode === 'split' ? 'is-full' : 'is-full') },
+            mode === 'split' ? h('div', { className: 'dsh-scr-pane-label' }, 'Preview') : null,
             h(
               'div',
-              { ref: previewRef, className: 'dsh-axl-preview', style: { '--axl-md-size': (settings.fontSize || 15) + 'px' } },
-              h('div', { className: 'dsh-axl-md' }, renderMarkdown(content, { onToggleTask: toggleTask })),
+              { ref: previewRef, className: 'dsh-scr-preview', style: { '--scr-md-size': (settings.fontSize || 15) + 'px' } },
+              h('div', { className: 'dsh-scr-md' }, renderMarkdown(content, { onToggleTask: toggleTask })),
             ),
           )
         : null,
     ),
     h(
       'section',
-      { className: 'dsh-axl-editor-media' },
+      { className: 'dsh-scr-editor-media' },
       h(
         'div',
-        { className: 'dsh-axl-editor-mediahead' },
-        h('span', { className: 'dsh-axl-editor-mediatitle' }, 'Attachments'),
-        h('span', { className: 'dsh-axl-attach-count' }, model.mediaOf(node).length + ' file(s)'),
-        actions.busy === 'media' ? h('span', { className: 'dsh-axl-attach-busy' }, 'Uploading…') : null,
+        { className: 'dsh-scr-editor-mediahead' },
+        h('span', { className: 'dsh-scr-editor-mediatitle' }, 'Attachments'),
+        h('span', { className: 'dsh-scr-attach-count' }, model.mediaOf(node).length + ' file(s)'),
+        actions.busy === 'media' ? h('span', { className: 'dsh-scr-attach-busy' }, 'Uploading…') : null,
       ),
       h(MediaGrid, {
         items: model.mediaOf(node),

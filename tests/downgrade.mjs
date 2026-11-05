@@ -29,9 +29,9 @@ const check = (title, fn) => {
   })
 }
 
-const home = await mkdtemp(join(tmpdir(), 'axl-downgrade-'))
+const home = await mkdtemp(join(tmpdir(), 'scr-downgrade-'))
 process.env.DSH_HOME = home
-const storeDir = join(home, 'alexandrie')
+const storeDir = join(home, 'scriptorium')
 const dataFile = join(storeDir, 'data.json')
 await mkdir(storeDir, { recursive: true })
 
@@ -66,7 +66,7 @@ function request(path, options = {}) {
       {
         host: '127.0.0.1',
         port,
-        path: '/dsh-alexandrie' + path,
+        path: '/dsh-scriptorium' + path,
         method: options.method || 'GET',
         headers: Object.assign({}, options.headers, body === null ? {} : { 'content-length': body.length }),
       },

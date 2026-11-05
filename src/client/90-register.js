@@ -1,7 +1,7 @@
 // Slot registration + lifecycle. The shell wraps every plugin apply in try/catch, but a
 // throwing page blanks the slot anyway, so failures are contained per render too.
 
-function AlexandrieIcon({ size }) {
+function ScriptoriumIcon({ size }) {
   return h(Icon, { name: 'book', size: size || 16 })
 }
 
@@ -17,30 +17,30 @@ class PanelBoundary extends React.Component {
   }
 
   componentDidCatch(error) {
-    console.error('[dsh-alexandrie] panel render failed', error)
+    console.error('[dsh-scriptorium] panel render failed', error)
   }
 
   render() {
     if (this.state.error === null) return this.props.children
     return h(
       'div',
-      { className: 'dsh-axl-empty', style: { height: '100%' } },
-      h('div', { className: 'dsh-axl-empty-icon' }, h(Icon, { name: 'warning', size: 22 })),
-      h('div', { className: 'dsh-axl-empty-title' }, 'Alexandrie hit an error'),
-      h('div', { className: 'dsh-axl-empty-hint' }, String((this.state.error && this.state.error.message) || this.state.error)),
+      { className: 'dsh-scr-empty', style: { height: '100%' } },
+      h('div', { className: 'dsh-scr-empty-icon' }, h(Icon, { name: 'warning', size: 22 })),
+      h('div', { className: 'dsh-scr-empty-title' }, 'Scriptorium hit an error'),
+      h('div', { className: 'dsh-scr-empty-hint' }, String((this.state.error && this.state.error.message) || this.state.error)),
       h(
         'button',
-        { type: 'button', className: 'dsh-axl-btn is-primary', onClick: () => this.setState({ error: null }) },
+        { type: 'button', className: 'dsh-scr-btn is-primary', onClick: () => this.setState({ error: null }) },
         'Try again',
       ),
     )
   }
 }
 
-function AlexandriePanel({ store }) {
+function ScriptoriumPanel({ store }) {
   return h(
     'div',
-    { className: 'dsh-axl-panel', style: { display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 } },
+    { className: 'dsh-scr-panel', style: { display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 } },
     h(PanelBoundary, null, h(App, { store })),
   )
 }
@@ -63,26 +63,26 @@ function apply(ctx) {
   try {
     disposers.push(insertStyle())
   } catch (error) {
-    console.error('[dsh-alexandrie] could not inject styles', error)
+    console.error('[dsh-scriptorium] could not inject styles', error)
   }
 
   const slots = ctx.get('slots')
   if (slots === undefined || slots === null) {
-    console.warn('[dsh-alexandrie] slots service is unavailable; the panel cannot mount')
+    console.warn('[dsh-scriptorium] slots service is unavailable; the panel cannot mount')
     return
   }
 
-  const Panel = () => h(AlexandriePanel, { store })
+  const Panel = () => h(ScriptoriumPanel, { store })
 
   try {
     disposers.push(slots.inject('main', () => slots.register({ name: 'main', key: PANEL_ID }, Panel)))
     disposers.push(
       slots.inject('sidebar.panellist', () =>
-        slots.register({ name: 'sidebar.panellist', id: PANEL_ID, order: PANEL_ORDER, label: () => 'Alexandrie' }, AlexandrieIcon),
+        slots.register({ name: 'sidebar.panellist', id: PANEL_ID, order: PANEL_ORDER, label: () => 'Scriptorium' }, ScriptoriumIcon),
       ),
     )
   } catch (error) {
-    console.error('[dsh-alexandrie] slot registration failed', error)
+    console.error('[dsh-scriptorium] slot registration failed', error)
   }
 
   void store.load()
@@ -92,9 +92,9 @@ function apply(ctx) {
       try {
         dispose()
       } catch (error) {
-        console.error('[dsh-alexandrie] dispose failed', error)
+        console.error('[dsh-scriptorium] dispose failed', error)
       }
     }
     store.dispose()
-  }, 'dsh-alexandrie: client')
+  }, 'dsh-scriptorium: client')
 }

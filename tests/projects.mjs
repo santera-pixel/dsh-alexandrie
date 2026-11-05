@@ -60,7 +60,7 @@ function loadClient(fetchImpl) {
 }
 
 const fetchFor = (handlers) => async (url, init) => {
-  const key = String(url).replace('/dsh-alexandrie', '') + ' ' + ((init && init.method) || 'GET')
+  const key = String(url).replace('/dsh-scriptorium', '') + ' ' + ((init && init.method) || 'GET')
   const handler = handlers[key]
   if (!handler) throw new Error('unexpected request: ' + key)
   const payload = handler(init && init.body ? JSON.parse(init.body) : null)

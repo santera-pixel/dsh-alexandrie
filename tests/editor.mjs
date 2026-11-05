@@ -100,7 +100,7 @@ const fetchStub = async (url, options = {}) => {
     return reply({ ok: true, value: { revision: host.revision, updatedAt: host.updatedAt, snapshot: host.snapshot } })
   }
   if (target.endsWith('/health')) {
-    return reply({ ok: true, value: { directory: 'C:\\x\\.dsh\\alexandrie', file: 'data.json', exists: true, size: 512 } })
+    return reply({ ok: true, value: { directory: 'C:\\x\\.dsh\\scriptorium', file: 'data.json', exists: true, size: 512 } })
   }
   if (target.endsWith('/save') && method === 'POST') {
     if (host.failSave) return reply({ ok: false, error: { message: 'disk full' } }, 500)
@@ -274,26 +274,26 @@ await check('a failed save surfaces an error state', async () => {
 await check('write mode renders only the textarea', () => {
   const { props } = makeEditorProps({ settings: { editorMode: 'write' } })
   const sink = renderTree(mod.DocumentEditor, props)
-  assert(hasClass(sink, 'dsh-axl-textarea'), 'textarea missing')
-  assert(!hasClass(sink, 'dsh-axl-md'), 'preview should be hidden in write mode')
+  assert(hasClass(sink, 'dsh-scr-textarea'), 'textarea missing')
+  assert(!hasClass(sink, 'dsh-scr-md'), 'preview should be hidden in write mode')
   assert(findByTag(sink, 'textarea').length === 1, 'expected one textarea')
 })
 
 await check('preview mode renders only the rendered document', () => {
   const { props } = makeEditorProps({ settings: { editorMode: 'preview' } })
   const sink = renderTree(mod.DocumentEditor, props)
-  assert(!hasClass(sink, 'dsh-axl-textarea'), 'textarea should be hidden in preview mode')
-  assert(hasClass(sink, 'dsh-axl-md'), 'preview body missing')
+  assert(!hasClass(sink, 'dsh-scr-textarea'), 'textarea should be hidden in preview mode')
+  assert(hasClass(sink, 'dsh-scr-md'), 'preview body missing')
   assert(textOf(sink).includes('Welcome'), 'document text missing from preview')
 })
 
 await check('split mode renders both panes with labels', () => {
   const { props } = makeEditorProps({ settings: { editorMode: 'split' } })
   const sink = renderTree(mod.DocumentEditor, props)
-  assert(hasClass(sink, 'dsh-axl-textarea') && hasClass(sink, 'dsh-axl-md'), 'split mode needs both panes')
+  assert(hasClass(sink, 'dsh-scr-textarea') && hasClass(sink, 'dsh-scr-md'), 'split mode needs both panes')
   const labels = textOf(sink)
   assert(labels.includes('Markdown') && labels.includes('Preview'), 'pane labels missing')
-  assert(hasClass(sink, 'dsh-axl-toolbar'), 'toolbar missing')
+  assert(hasClass(sink, 'dsh-scr-toolbar'), 'toolbar missing')
 })
 
 await check('the toolbar exposes every formatting action', () => {
@@ -400,9 +400,9 @@ await check('renderMarkdown covers headings, tables, fences, containers and rule
   assert(tags.includes('h1') && tags.includes('h2'), 'headings missing: ' + tags.join(','))
   assert(tags.includes('table') && tags.includes('thead') && tags.includes('tbody'), 'table missing')
   assert(tags.includes('pre') && tags.includes('code'), 'code fence missing')
-  assert(hasClass(sink, 'dsh-axl-md-copy'), 'copy button missing')
+  assert(hasClass(sink, 'dsh-scr-md-copy'), 'copy button missing')
   assert(textOf(sink).includes('ts'), 'code fence language label missing')
-  assert(hasClass(sink, 'dsh-axl-md-container'), 'callout container missing')
+  assert(hasClass(sink, 'dsh-scr-md-container'), 'callout container missing')
   assert(tags.includes('blockquote'), 'blockquote missing')
   assert(tags.includes('hr'), 'horizontal rule missing')
 })
@@ -431,7 +431,7 @@ await check('task list checkboxes report their line index', () => {
   assert(boxes[0].props.checked === false && boxes[1].props.checked === true, 'checkbox state wrong')
   boxes[0].props.onChange({ target: { checked: true } })
   assert(JSON.stringify(events[0]) === '[0,true]', 'unexpected event: ' + JSON.stringify(events[0]))
-  assert(hasClass(sink, 'dsh-axl-md-task'), 'task class missing on list item')
+  assert(hasClass(sink, 'dsh-scr-md-task'), 'task class missing on list item')
 })
 
 await check('raw HTML in the source can never become markup', () => {

@@ -78,7 +78,7 @@ const check = (title, fn) => {
 }
 
 check('slugify produces a safe file name', () => {
-  assert.equal(slugify('Welcome to Alexandrie'), 'welcome-to-alexandrie')
+  assert.equal(slugify('Welcome to Scriptorium'), 'welcome-to-scriptorium')
   assert.equal(slugify('  Weird /// title!!  '), 'weird-title')
   assert.equal(slugify(''), 'document')
   assert.equal(slugify(null), 'document')
@@ -99,9 +99,9 @@ check('a Markdown export downloads one .md file with the exact body', () => {
 check('a JSON export downloads one .json file with the serialized snapshot', () => {
   downloads.length = 0
   const snapshot = { version: 1, workspaces: [{ id: 'ws-1', name: 'Docs' }], nodes: [] }
-  downloadText('alexandrie-archive-2026-01-01.json', JSON.stringify(snapshot, null, 2))
+  downloadText('scriptorium-archive-2026-01-01.json', JSON.stringify(snapshot, null, 2))
   assert.equal(downloads.length, 1)
-  assert.equal(downloads[0].filename, 'alexandrie-archive-2026-01-01.json')
+  assert.equal(downloads[0].filename, 'scriptorium-archive-2026-01-01.json')
   const blob = blobs[blobs.length - 1]
   assert.match(blob.type, /^application\/json/)
   assert.deepEqual(JSON.parse(blob.text), snapshot)

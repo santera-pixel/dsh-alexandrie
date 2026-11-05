@@ -330,7 +330,7 @@ check('canvas geometry stays finite for extreme values', () => {
 
 /* ------------------------------------------------------------------- host */
 
-const home = await mkdtemp(join(tmpdir(), 'axl-battle-'))
+const home = await mkdtemp(join(tmpdir(), 'scr-battle-'))
 process.env.DSH_HOME = home
 const routes = []
 apply({
@@ -361,7 +361,7 @@ function request(path, options = {}) {
       {
         host: '127.0.0.1',
         port,
-        path: '/dsh-alexandrie' + path,
+        path: '/dsh-scriptorium' + path,
         method: options.method || 'GET',
         headers: Object.assign({}, options.headers, body === null ? {} : { 'content-length': body.length }),
       },
@@ -401,7 +401,7 @@ check('concurrent saves serialise and leave valid JSON on disk', async () => {
   const state = await request('/state')
   assert.equal(state.status, 200)
   assert.ok(['race '].some((prefix) => state.json.value.snapshot.nodes[0].title.startsWith(prefix)), 'one winner is stored')
-  const onDisk = JSON.parse(await fs.promises.readFile(join(home, 'alexandrie', 'data.json'), 'utf8'))
+  const onDisk = JSON.parse(await fs.promises.readFile(join(home, 'scriptorium', 'data.json'), 'utf8'))
   assert.ok(onDisk.snapshot.nodes.length === 1, 'the data file is valid JSON with one snapshot')
 })
 
@@ -438,10 +438,10 @@ check('media uploads resist traversal names and concurrency', async () => {
   assert.ok(uploads.every((response) => response.status === 200), 'all uploads succeeded')
   const ids = uploads.map((response) => response.json.value.id)
   assert.equal(new Set(ids).size, ids.length, 'ids are unique under concurrency')
-  const directory = join(home, 'alexandrie', 'media')
+  const directory = join(home, 'scriptorium', 'media')
   const written = await readdir(directory)
   assert.ok(written.every((name) => !name.includes('..') && !name.includes('/') && !name.includes('\\')), 'no traversal file names on disk')
-  const outside = join(home, 'alexandrie', 'evil.png')
+  const outside = join(home, 'scriptorium', 'evil.png')
   assert.ok(!fs.existsSync(outside), 'nothing escaped the media directory')
   const traversal = await request('/media/..%2F..%2Fdata.json')
   assert.ok(traversal.status === 400 || traversal.status === 404, 'path id rejected')

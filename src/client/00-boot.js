@@ -1,9 +1,9 @@
 // Shared boot: React access, element helper, icon set, utilities, plugin identity.
 
-const PLUGIN_ID = 'dsh-alexandrie'
-const PANEL_ID = 'dsh-alexandrie'
+const PLUGIN_ID = 'dsh-scriptorium'
+const PANEL_ID = 'dsh-scriptorium'
 const PANEL_ORDER = 12
-const ROUTE_BASE = '/dsh-alexandrie'
+const ROUTE_BASE = '/dsh-scriptorium'
 
 const React = require('react')
 const h = React.createElement
@@ -57,7 +57,7 @@ async function api(path, options = {}) {
   try {
     payload = text === '' ? null : JSON.parse(text)
   } catch {
-    throw new Error(`alexandrie: ${path}: response was not JSON (HTTP ${response.status})`)
+    throw new Error(`scriptorium: ${path}: response was not JSON (HTTP ${response.status})`)
   }
   if (!response.ok || payload === null || payload.ok !== true) {
     const message = (payload && payload.error && payload.error.message) || `HTTP ${response.status}`
@@ -79,7 +79,7 @@ async function apiRaw(path, options = {}) {
   try {
     payload = text === '' ? null : JSON.parse(text)
   } catch {
-    throw new Error(`alexandrie: ${path}: response was not JSON (HTTP ${response.status})`)
+    throw new Error(`scriptorium: ${path}: response was not JSON (HTTP ${response.status})`)
   }
   if (!response.ok || payload === null || payload.ok !== true) {
     const message = (payload && payload.error && payload.error.message) || `HTTP ${response.status}`
@@ -191,7 +191,7 @@ function IconButton({ icon, label, onClick, active, danger, disabled, size = 16,
     'button',
     {
       type: 'button',
-      className: cx('dsh-axl-icon-btn', active && 'is-active', danger && 'is-danger', className),
+      className: cx('dsh-scr-icon-btn', active && 'is-active', danger && 'is-danger', className),
       title: label,
       'aria-label': label,
       'aria-pressed': active === undefined ? undefined : active ? 'true' : 'false',

@@ -11,7 +11,8 @@
 
 const GRAPH_LINK_PATTERNS = [
   { kind: 'wiki', pattern: /!?\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|([^\]]*))?\]\]/g },
-  { kind: 'markdown', pattern: /\[([^\]]*)\]\((?:alexandrie:\/\/|note:)([^)\s]+)\)/g },
+  // `alexandrie://` is the pre-rename spelling: old notes keep their links working.
+  { kind: 'markdown', pattern: /\[([^\]]*)\]\((?:scriptorium:\/\/|alexandrie:\/\/|note:)([^)\s]+)\)/g },
 ]
 
 function normalizeTitle(text) {
@@ -451,7 +452,7 @@ function MindGraph(props) {
     }
     if (selected !== null) dim = node.id !== selected && !near.has(node.id)
     return cx(
-      'dsh-axl-graph-node',
+      'dsh-scr-graph-node',
       'is-' + node.kind,
       selected === node.id && 'is-selected',
       connectFrom === node.id && 'is-connect-source',
@@ -574,7 +575,7 @@ function MindGraph(props) {
   return h(
     'div',
     {
-      className: 'dsh-axl-graph',
+      className: 'dsh-scr-graph',
       ref: containerRef,
       tabIndex: 0,
       onKeyDown,
@@ -583,22 +584,22 @@ function MindGraph(props) {
     },
     h(
       'div',
-      { className: 'dsh-axl-graph-toolbar' },
-      h('span', { className: 'dsh-axl-graph-title' }, h(Icon, { name: 'graph', size: 14 }), 'Mind graph'),
-      h('span', { className: 'dsh-axl-graph-stat' }, graph.docs.length + ' notes'),
-      h('span', { className: 'dsh-axl-graph-stat' }, graph.edges.length + ' link(s)'),
-      h('span', { className: 'dsh-axl-graph-stat is-warn' }, graph.orphans.length + ' orphan(s)'),
-      h('span', { className: 'dsh-axl-graph-spacer' }),
-      h('label', { className: 'dsh-axl-graph-search' }, h(Icon, { name: 'search', size: 12 }), h('input', {
-        className: 'dsh-axl-graph-query',
+      { className: 'dsh-scr-graph-toolbar' },
+      h('span', { className: 'dsh-scr-graph-title' }, h(Icon, { name: 'graph', size: 14 }), 'Mind graph'),
+      h('span', { className: 'dsh-scr-graph-stat' }, graph.docs.length + ' notes'),
+      h('span', { className: 'dsh-scr-graph-stat' }, graph.edges.length + ' link(s)'),
+      h('span', { className: 'dsh-scr-graph-stat is-warn' }, graph.orphans.length + ' orphan(s)'),
+      h('span', { className: 'dsh-scr-graph-spacer' }),
+      h('label', { className: 'dsh-scr-graph-search' }, h(Icon, { name: 'search', size: 12 }), h('input', {
+        className: 'dsh-scr-graph-query',
         placeholder: 'Filter notes…',
         value: query,
         onChange: (event) => setQuery(event.target.value),
         'aria-label': 'Filter notes in the graph',
       })),
-      h('button', { type: 'button', className: cx('dsh-axl-btn is-ghost', showTags && 'is-primary'), title: 'Show tag nodes', onClick: () => patchGraph({ showTags: !showTags }) }, h(Icon, { name: 'tag', size: 12 }), 'Tags'),
-      h('button', { type: 'button', className: cx('dsh-axl-btn is-ghost', showLabels && 'is-primary'), title: 'Toggle labels', onClick: () => patchGraph({ showLabels: !showLabels }) }, 'Aa'),
-      h('button', { type: 'button', className: cx('dsh-axl-btn is-ghost', scopeAll && 'is-primary'), title: 'Include every workspace', onClick: () => patchGraph({ scopeAll: !scopeAll }) }, 'All'),
+      h('button', { type: 'button', className: cx('dsh-scr-btn is-ghost', showTags && 'is-primary'), title: 'Show tag nodes', onClick: () => patchGraph({ showTags: !showTags }) }, h(Icon, { name: 'tag', size: 12 }), 'Tags'),
+      h('button', { type: 'button', className: cx('dsh-scr-btn is-ghost', showLabels && 'is-primary'), title: 'Toggle labels', onClick: () => patchGraph({ showLabels: !showLabels }) }, 'Aa'),
+      h('button', { type: 'button', className: cx('dsh-scr-btn is-ghost', scopeAll && 'is-primary'), title: 'Include every workspace', onClick: () => patchGraph({ scopeAll: !scopeAll }) }, 'All'),
       h(IconButton, {
         icon: 'link',
         label: 'Connect two notes',
@@ -616,26 +617,26 @@ function MindGraph(props) {
         },
       }),
       h(IconButton, { icon: 'refresh', label: 'Re-layout graph', onClick: relayout }),
-      h('span', { className: 'dsh-axl-canvas-sep' }),
+      h('span', { className: 'dsh-scr-canvas-sep' }),
       h(IconButton, { icon: 'minus', label: 'Zoom out', onClick: () => zoomBy(1 / 1.2) }),
-      h('span', { className: 'dsh-axl-graph-zoom' }, Math.round(view.zoom * 100) + '%'),
+      h('span', { className: 'dsh-scr-graph-zoom' }, Math.round(view.zoom * 100) + '%'),
       h(IconButton, { icon: 'plus', label: 'Zoom in', onClick: () => zoomBy(1.2) }),
       h(IconButton, { icon: 'fit', label: 'Fit graph', onClick: fit }),
     ),
     graph.nodes.length === 0
       ? h(
           'div',
-          { className: 'dsh-axl-graph-empty' },
+          { className: 'dsh-scr-graph-empty' },
           h(Icon, { name: 'graph', size: 28 }),
           h('strong', null, 'No notes to map yet'),
           h('span', null, 'Create a document in this workspace, then link notes with [[another note title]].'),
         )
       : h(
           'div',
-          { className: 'dsh-axl-graph-viewport' },
+          { className: 'dsh-scr-graph-viewport' },
           h(
             'svg',
-            { className: 'dsh-axl-graph-svg', width: '100%', height: '100%', onMouseDown: onSvgDown, role: 'group', 'aria-label': 'Graph of notes and links' },
+            { className: 'dsh-scr-graph-svg', width: '100%', height: '100%', onMouseDown: onSvgDown, role: 'group', 'aria-label': 'Graph of notes and links' },
             h(
               'g',
               { transform: 'translate(' + view.x + ' ' + view.y + ') scale(' + view.zoom + ')' },
@@ -645,7 +646,7 @@ function MindGraph(props) {
                 if (from === undefined || to === undefined) return null
                 return h('line', {
                   key: edge.id,
-                  className: cx('dsh-axl-graph-edge', edge.kind === 'tag' && 'is-tag', !edgeVisible(edge) && 'is-dim'),
+                  className: cx('dsh-scr-graph-edge', edge.kind === 'tag' && 'is-tag', !edgeVisible(edge) && 'is-dim'),
                   x1: from.x,
                   y1: from.y,
                   x2: to.x,
@@ -670,68 +671,68 @@ function MindGraph(props) {
                       if (node.kind === 'doc') onOpen(node.node.id)
                     },
                   },
-                  h('circle', { className: 'dsh-axl-graph-dot', r: nodeRadius(node) }),
+                  h('circle', { className: 'dsh-scr-graph-dot', r: nodeRadius(node) }),
                   h('title', null, node.kind === 'tag' ? 'Tag ' + node.label : node.label + ' · ' + node.degree + ' link(s)'),
                   showLabels
-                    ? h('text', { className: 'dsh-axl-graph-label', x: 0, y: nodeRadius(node) + 14, textAnchor: 'middle' }, node.label)
+                    ? h('text', { className: 'dsh-scr-graph-label', x: 0, y: nodeRadius(node) + 14, textAnchor: 'middle' }, node.label)
                     : null,
                 )
               }),
             ),
           ),
-          settling ? h('div', { className: 'dsh-axl-graph-settling' }, 'Settling…') : null,
+          settling ? h('div', { className: 'dsh-scr-graph-settling' }, 'Settling…') : null,
           connectFrom !== null
             ? h(
                 'div',
-                { className: 'dsh-axl-graph-hintbar' },
+                { className: 'dsh-scr-graph-hintbar' },
                 connectFrom === ''
                   ? 'Select a note to start the connection'
                   : 'Now choose the note to link from “' + (graph.nodes.find((node) => node.id === connectFrom) || { label: 'note' }).label + '”',
-                h('button', { type: 'button', className: 'dsh-axl-btn is-ghost is-small', onClick: () => setConnectFrom(null) }, 'Cancel'),
+                h('button', { type: 'button', className: 'dsh-scr-btn is-ghost is-small', onClick: () => setConnectFrom(null) }, 'Cancel'),
               )
             : null,
           graph.orphans.length > 0 && graph.edges.length === 0
-            ? h('div', { className: 'dsh-axl-graph-hintbar is-bottom' }, 'No links yet — type [[note title]] inside a note to connect it.')
+            ? h('div', { className: 'dsh-scr-graph-hintbar is-bottom' }, 'No links yet — type [[note title]] inside a note to connect it.')
             : null,
         ),
   )
 }
 
 const GRAPH_CSS = `
-.dsh-axl-graph { display: flex; flex-direction: column; height: 100%; min-height: 460px; outline: none; }
-.dsh-axl-graph-toolbar { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--dsw-alias-border-l1); background: color-mix(in srgb, var(--dsw-alias-bg-base) 92%, var(--dsw-alias-bg-layer-1)); flex-wrap: wrap; }
-.dsh-axl-graph-title { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 650; color: var(--dsw-alias-label-primary); }
-.dsh-axl-graph-stat { font-size: 11px; color: var(--dsw-alias-label-secondary); padding: 1px 7px; border-radius: 999px; background: var(--dsw-alias-bg-layer-2); }
-.dsh-axl-graph-stat.is-warn { color: var(--dsw-alias-state-warn-primary); }
-.dsh-axl-graph-spacer { flex: 1 1 auto; }
-.dsh-axl-graph-search { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 8px; border-radius: 8px; border: 1px solid var(--dsw-alias-border-l1); background: var(--dsw-alias-bg-base); color: var(--dsw-alias-label-secondary); }
-.dsh-axl-graph-query { width: 120px; border: 0; outline: none; background: transparent; color: var(--dsw-alias-label-primary); font-size: 12px; }
-.dsh-axl-graph-zoom { min-width: 40px; text-align: center; font-size: 11px; font-variant-numeric: tabular-nums; color: var(--dsw-alias-label-secondary); }
-.dsh-axl-graph-viewport { position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden; background-color: var(--dsw-alias-bg-base); background-image: radial-gradient(color-mix(in srgb, var(--dsw-alias-label-primary) 13%, transparent) 1px, transparent 1px); background-size: 24px 24px; cursor: grab; }
-.dsh-axl-graph-viewport:active { cursor: grabbing; }
-.dsh-axl-graph-svg { display: block; width: 100%; height: 100%; }
-.dsh-axl-graph-edge { stroke: color-mix(in srgb, var(--dsw-alias-label-secondary) 42%, transparent); stroke-width: 1.2; transition: opacity .18s ease, stroke .18s ease; }
-.dsh-axl-graph-edge.is-tag { stroke-dasharray: 3 4; stroke: color-mix(in srgb, var(--dsw-alias-state-warn-primary) 48%, transparent); }
-.dsh-axl-graph-edge.is-dim { opacity: .12; }
-.dsh-axl-graph-node { cursor: pointer; transition: opacity .2s ease; }
-.dsh-axl-graph-dot { fill: color-mix(in srgb, var(--dsw-alias-brand-primary) 20%, var(--dsw-alias-bg-layer-1)); stroke: var(--dsw-alias-brand-primary); stroke-width: 1.4; transition: fill .18s ease, r .18s ease; }
-.dsh-axl-graph-node.is-tag .dsh-axl-graph-dot { fill: color-mix(in srgb, var(--dsw-alias-state-warn-primary) 18%, var(--dsw-alias-bg-layer-1)); stroke: var(--dsw-alias-state-warn-primary); }
-.dsh-axl-graph-node:hover .dsh-axl-graph-dot { fill: color-mix(in srgb, var(--dsw-alias-brand-primary) 34%, var(--dsw-alias-bg-layer-1)); }
-.dsh-axl-graph-node.is-selected .dsh-axl-graph-dot { fill: var(--dsw-alias-brand-primary); stroke: var(--dsw-alias-brand-primary); }
-.dsh-axl-graph-node.is-neighbour .dsh-axl-graph-dot { fill: color-mix(in srgb, var(--dsw-alias-brand-primary) 42%, var(--dsw-alias-bg-layer-1)); }
-.dsh-axl-graph-node.is-connect-source .dsh-axl-graph-dot { stroke-width: 3; fill: var(--dsw-alias-brand-primary); }
-.dsh-axl-graph-node.is-dim { opacity: .16; }
-.dsh-axl-graph-node:focus-visible { outline: none; }
-.dsh-axl-graph-node:focus-visible .dsh-axl-graph-dot { stroke: var(--dsw-alias-brand-primary); stroke-width: 3; }
-.dsh-axl-graph-node:focus-visible .dsh-axl-graph-label { fill: var(--dsw-alias-brand-primary); }
-.dsh-axl-graph-label { font-size: 10.5px; fill: var(--dsw-alias-label-primary); pointer-events: none; user-select: none; paint-order: stroke; stroke: var(--dsw-alias-bg-base); stroke-width: 3px; stroke-linejoin: round; }
-.dsh-axl-graph-settling { position: absolute; right: 14px; top: 12px; font-size: 10.5px; color: var(--dsw-alias-label-secondary); padding: 3px 8px; border-radius: 999px; background: var(--dsw-alias-bg-layer-2); animation: dsh-axl-pulse 1.2s ease-in-out infinite; }
-.dsh-axl-graph-hintbar { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; padding: 7px 12px; border-radius: 999px; font-size: 11.5px; color: var(--dsw-alias-label-primary); background: var(--dsw-alias-bg-overlay, var(--dsw-alias-bg-layer-1)); border: 1px solid var(--dsw-alias-border-l1); box-shadow: 0 8px 24px color-mix(in srgb, var(--dsw-alias-label-primary) 16%, transparent); animation: dsh-axl-pop .18s ease both; }
-.dsh-axl-graph-hintbar.is-bottom { top: auto; bottom: 14px; color: var(--dsw-alias-label-secondary); }
-.dsh-axl-graph-empty { flex: 1 1 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 24px; text-align: center; color: var(--dsw-alias-label-secondary); }
-.dsh-axl-graph-empty strong { color: var(--dsw-alias-label-primary); font-size: 14px; }
-.dsh-axl-graph-empty span { max-width: 360px; font-size: 12px; line-height: 1.5; }
-@media (max-width: 1200px) { .dsh-axl-graph-title { display: none; } .dsh-axl-graph-query { width: 84px; } }
+.dsh-scr-graph { display: flex; flex-direction: column; height: 100%; min-height: 460px; outline: none; }
+.dsh-scr-graph-toolbar { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--dsw-alias-border-l1); background: color-mix(in srgb, var(--dsw-alias-bg-base) 92%, var(--dsw-alias-bg-layer-1)); flex-wrap: wrap; }
+.dsh-scr-graph-title { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 650; color: var(--dsw-alias-label-primary); }
+.dsh-scr-graph-stat { font-size: 11px; color: var(--dsw-alias-label-secondary); padding: 1px 7px; border-radius: 999px; background: var(--dsw-alias-bg-layer-2); }
+.dsh-scr-graph-stat.is-warn { color: var(--dsw-alias-state-warn-primary); }
+.dsh-scr-graph-spacer { flex: 1 1 auto; }
+.dsh-scr-graph-search { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 8px; border-radius: 8px; border: 1px solid var(--dsw-alias-border-l1); background: var(--dsw-alias-bg-base); color: var(--dsw-alias-label-secondary); }
+.dsh-scr-graph-query { width: 120px; border: 0; outline: none; background: transparent; color: var(--dsw-alias-label-primary); font-size: 12px; }
+.dsh-scr-graph-zoom { min-width: 40px; text-align: center; font-size: 11px; font-variant-numeric: tabular-nums; color: var(--dsw-alias-label-secondary); }
+.dsh-scr-graph-viewport { position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden; background-color: var(--dsw-alias-bg-base); background-image: radial-gradient(color-mix(in srgb, var(--dsw-alias-label-primary) 13%, transparent) 1px, transparent 1px); background-size: 24px 24px; cursor: grab; }
+.dsh-scr-graph-viewport:active { cursor: grabbing; }
+.dsh-scr-graph-svg { display: block; width: 100%; height: 100%; }
+.dsh-scr-graph-edge { stroke: color-mix(in srgb, var(--dsw-alias-label-secondary) 42%, transparent); stroke-width: 1.2; transition: opacity .18s ease, stroke .18s ease; }
+.dsh-scr-graph-edge.is-tag { stroke-dasharray: 3 4; stroke: color-mix(in srgb, var(--dsw-alias-state-warn-primary) 48%, transparent); }
+.dsh-scr-graph-edge.is-dim { opacity: .12; }
+.dsh-scr-graph-node { cursor: pointer; transition: opacity .2s ease; }
+.dsh-scr-graph-dot { fill: color-mix(in srgb, var(--dsw-alias-brand-primary) 20%, var(--dsw-alias-bg-layer-1)); stroke: var(--dsw-alias-brand-primary); stroke-width: 1.4; transition: fill .18s ease, r .18s ease; }
+.dsh-scr-graph-node.is-tag .dsh-scr-graph-dot { fill: color-mix(in srgb, var(--dsw-alias-state-warn-primary) 18%, var(--dsw-alias-bg-layer-1)); stroke: var(--dsw-alias-state-warn-primary); }
+.dsh-scr-graph-node:hover .dsh-scr-graph-dot { fill: color-mix(in srgb, var(--dsw-alias-brand-primary) 34%, var(--dsw-alias-bg-layer-1)); }
+.dsh-scr-graph-node.is-selected .dsh-scr-graph-dot { fill: var(--dsw-alias-brand-primary); stroke: var(--dsw-alias-brand-primary); }
+.dsh-scr-graph-node.is-neighbour .dsh-scr-graph-dot { fill: color-mix(in srgb, var(--dsw-alias-brand-primary) 42%, var(--dsw-alias-bg-layer-1)); }
+.dsh-scr-graph-node.is-connect-source .dsh-scr-graph-dot { stroke-width: 3; fill: var(--dsw-alias-brand-primary); }
+.dsh-scr-graph-node.is-dim { opacity: .16; }
+.dsh-scr-graph-node:focus-visible { outline: none; }
+.dsh-scr-graph-node:focus-visible .dsh-scr-graph-dot { stroke: var(--dsw-alias-brand-primary); stroke-width: 3; }
+.dsh-scr-graph-node:focus-visible .dsh-scr-graph-label { fill: var(--dsw-alias-brand-primary); }
+.dsh-scr-graph-label { font-size: 10.5px; fill: var(--dsw-alias-label-primary); pointer-events: none; user-select: none; paint-order: stroke; stroke: var(--dsw-alias-bg-base); stroke-width: 3px; stroke-linejoin: round; }
+.dsh-scr-graph-settling { position: absolute; right: 14px; top: 12px; font-size: 10.5px; color: var(--dsw-alias-label-secondary); padding: 3px 8px; border-radius: 999px; background: var(--dsw-alias-bg-layer-2); animation: dsh-scr-pulse 1.2s ease-in-out infinite; }
+.dsh-scr-graph-hintbar { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; padding: 7px 12px; border-radius: 999px; font-size: 11.5px; color: var(--dsw-alias-label-primary); background: var(--dsw-alias-bg-overlay, var(--dsw-alias-bg-layer-1)); border: 1px solid var(--dsw-alias-border-l1); box-shadow: 0 8px 24px color-mix(in srgb, var(--dsw-alias-label-primary) 16%, transparent); animation: dsh-scr-pop .18s ease both; }
+.dsh-scr-graph-hintbar.is-bottom { top: auto; bottom: 14px; color: var(--dsw-alias-label-secondary); }
+.dsh-scr-graph-empty { flex: 1 1 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 24px; text-align: center; color: var(--dsw-alias-label-secondary); }
+.dsh-scr-graph-empty strong { color: var(--dsw-alias-label-primary); font-size: 14px; }
+.dsh-scr-graph-empty span { max-width: 360px; font-size: 12px; line-height: 1.5; }
+@media (max-width: 1200px) { .dsh-scr-graph-title { display: none; } .dsh-scr-graph-query { width: 84px; } }
 `
 
 CSS_CHUNKS.push(GRAPH_CSS)

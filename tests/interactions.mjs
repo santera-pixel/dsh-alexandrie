@@ -12,7 +12,7 @@ const parts = fs
   .sort()
 
 const exposed =
-  'searchDocuments, SearchOverlay, CommandPalette, axlPaletteFilter, axlPaletteTouch, AXL_PALETTE_RECENT, ' +
+  'searchDocuments, SearchOverlay, CommandPalette, scrPaletteFilter, scrPaletteTouch, AXL_PALETTE_RECENT, ' +
   'KanbanBoard, App, TagCloud, collectTags, tagHue'
 
 const source = parts.map((name) => fs.readFileSync(path.join(clientDir, name), 'utf8')).join('\n') + '\n;return { ' + exposed + ', model, createStore }\n'
@@ -160,7 +160,7 @@ const fixture = () => ({
       order: 0,
       createdAt: stamp,
       updatedAt: at(3),
-      content: '# Welcome guide\n\nAlexandrie knowledge base notes.\n',
+      content: '# Welcome guide\n\nScriptorium knowledge base notes.\n',
     },
     {
       id: 'doc-b',
@@ -286,9 +286,9 @@ check('the search overlay highlights hits and picks on Enter', () => {
     onClose: () => (closed += 1),
     workspaceId: 'ws-1',
   })
-  assert(hasClass(sink, 'dsh-axl-search-hit'), 'no highlighted segment rendered')
+  assert(hasClass(sink, 'dsh-scr-search-hit'), 'no highlighted segment rendered')
   assert(textOf(sink).replace(/\s+/g, ' ').includes('Knowledge base'), 'result title missing')
-  const panel = byClass(sink, 'dsh-axl-search-panel')[0]
+  const panel = byClass(sink, 'dsh-scr-search-panel')[0]
   assert(panel !== undefined, 'search panel missing')
   let prevented = 0
   panel.props.onKeyDown({ key: 'Enter', preventDefault: () => (prevented += 1) })
@@ -306,23 +306,23 @@ const commands = [
 ]
 
 check('the palette filters fuzzily and drops non-matches', () => {
-  const filtered = mod.axlPaletteFilter(commands, 'newdoc').map((command) => command.id)
+  const filtered = mod.scrPaletteFilter(commands, 'newdoc').map((command) => command.id)
   assert(filtered.length === 1 && filtered[0] === 'new-doc', 'unexpected fuzzy result: ' + filtered.join(','))
-  const empty = mod.axlPaletteFilter(commands, 'zzzz')
+  const empty = mod.scrPaletteFilter(commands, 'zzzz')
   assert(empty.length === 0, 'non-matching query returned entries')
-  const all = mod.axlPaletteFilter(commands, '')
+  const all = mod.scrPaletteFilter(commands, '')
   assert(all.length === 3, 'blank query should list every command, got ' + all.length)
 })
 
 check('recently used commands float to the top of the palette', () => {
   mod.AXL_PALETTE_RECENT.length = 0
-  mod.axlPaletteTouch('export')
-  const ordered = mod.axlPaletteFilter(commands, '').map((command) => command.id)
+  mod.scrPaletteTouch('export')
+  const ordered = mod.scrPaletteFilter(commands, '').map((command) => command.id)
   assert(ordered[0] === 'export', 'recent command not first: ' + ordered.join(','))
-  mod.axlPaletteTouch('settings')
-  const again = mod.axlPaletteFilter(commands, '').map((command) => command.id)
+  mod.scrPaletteTouch('settings')
+  const again = mod.scrPaletteFilter(commands, '').map((command) => command.id)
   assert(again[0] === 'settings' && again[1] === 'export', 'recency order lost: ' + again.join(','))
-  mod.axlPaletteTouch('settings')
+  mod.scrPaletteTouch('settings')
   assert(mod.AXL_PALETTE_RECENT.filter((id) => id === 'settings').length === 1, 'recency must not duplicate entries')
   mod.AXL_PALETTE_RECENT.length = 0
 })
@@ -333,8 +333,8 @@ check('the palette renders groups and runs the selected command', () => {
   const local = commands.map((command) => Object.assign({}, command, { run: () => ran.push(command.id) }))
   const sink = renderTree(mod.CommandPalette, { commands: local, onClose: () => (closed += 1) })
   assert(textOf(sink).includes('New document') && textOf(sink).includes('Export archive'), 'command titles missing')
-  assert(byClass(sink, 'dsh-axl-palette-group').length === 2, 'expected two groups')
-  const rows = byClass(sink, 'dsh-axl-palette-row')
+  assert(byClass(sink, 'dsh-scr-palette-group').length === 2, 'expected two groups')
+  const rows = byClass(sink, 'dsh-scr-palette-row')
   assert(rows.length === 3, 'expected a row per command, got ' + rows.length)
   assert(typeof rows[0].props.onClick === 'function', 'palette row is not clickable')
   rows[0].props.onClick()
@@ -361,23 +361,23 @@ check('the board renders the three status columns with cards', () => {
   const snap = fixture()
   const store = makeStore(snap)
   const sink = renderTree(mod.KanbanBoard, { store, snapshot: snap, onOpen() {}, workspaceId: 'ws-1' })
-  const columns = byClass(sink, 'dsh-axl-board-col')
+  const columns = byClass(sink, 'dsh-scr-board-col')
   assert(columns.length === 3, 'expected three columns, got ' + columns.length)
   const text = textOf(sink)
   for (const label of ['Draft', 'Active', 'Done']) assert(text.includes(label), 'column label missing: ' + label)
-  assert(byClass(sink, 'dsh-axl-board-card').length === 3, 'expected three cards')
+  assert(byClass(sink, 'dsh-scr-board-card').length === 3, 'expected three cards')
 })
 
 check('dragging a card to another column persists the new status', () => {
   const snap = fixture()
   const store = makeStore(snap)
   const sink = renderTree(mod.KanbanBoard, { store, snapshot: snap, onOpen() {}, workspaceId: 'ws-1' })
-  const cards = byClass(sink, 'dsh-axl-board-card')
+  const cards = byClass(sink, 'dsh-scr-board-card')
   const card = cards.find((entry) => entry.props['data-node'] === 'doc-b' || JSON.stringify(entry.props).includes('doc-b'))
   assert(card !== undefined, 'doc-b card missing')
   const payload = {}
   card.props.onDragStart({ dataTransfer: { setData: (type, value) => (payload[type] = value), effectAllowed: '' } })
-  const columns = byClass(sink, 'dsh-axl-board-col')
+  const columns = byClass(sink, 'dsh-scr-board-col')
   const draftColumn = columns[0]
   draftColumn.props.onDrop({ preventDefault() {}, dataTransfer: { getData: (type) => payload[type] || '' } })
   const moved = snap.nodes.find((node) => node.id === 'doc-b')
@@ -389,7 +389,7 @@ check('dropping an unknown card id changes nothing', () => {
   const snap = fixture()
   const store = makeStore(snap)
   const sink = renderTree(mod.KanbanBoard, { store, snapshot: snap, onOpen() {}, workspaceId: 'ws-1' })
-  const columns = byClass(sink, 'dsh-axl-board-col')
+  const columns = byClass(sink, 'dsh-scr-board-col')
   columns[2].props.onDrop({ preventDefault() {}, dataTransfer: { getData: () => 'does-not-exist' } })
   assert(snap.nodes.find((node) => node.id === 'doc-a').status === 'active', 'an unknown id changed a status')
   assert(store.commits.length === 0, 'an unknown id was committed')
@@ -400,7 +400,7 @@ check('an empty workspace shows one placeholder per column', () => {
   snap.nodes = []
   const store = makeStore(snap)
   const sink = renderTree(mod.KanbanBoard, { store, snapshot: snap, onOpen() {}, workspaceId: 'ws-1' })
-  assert(byClass(sink, 'dsh-axl-board-empty').length === 3, 'expected three empty placeholders')
+  assert(byClass(sink, 'dsh-scr-board-empty').length === 3, 'expected three empty placeholders')
 })
 
 // ---------- tags ----------

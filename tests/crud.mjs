@@ -18,7 +18,7 @@ const source =
 const host = { revision: 0, snapshot: null, saves: 0 }
 const envelope = (value) => ({ ok: true, status: 200, text: async () => JSON.stringify({ ok: true, value }) })
 const fetchStub = async (url, options) => {
-  const route = String(url).replace('/dsh-alexandrie', '')
+  const route = String(url).replace('/dsh-scriptorium', '')
   const method = (options && options.method) || 'GET'
   if (route === '/state' && method === 'GET') {
     return envelope({ version: 1, revision: host.revision, updatedAt: new Date().toISOString(), snapshot: host.snapshot })

@@ -1,6 +1,6 @@
 // End-to-end probe against the running Harness: persistence round-trip plus validation guards.
 // The harness picks a fresh port on every launch, so DSH_WEB_URL wins over the local default.
-const base = (process.env.DSH_WEB_URL || 'http://127.0.0.1:64551') + '/dsh-alexandrie'
+const base = (process.env.DSH_WEB_URL || 'http://127.0.0.1:64551') + '/dsh-scriptorium'
 
 const call = async (path, options) => {
   const response = await fetch(base + path, Object.assign({ signal: AbortSignal.timeout(15000) }, options))

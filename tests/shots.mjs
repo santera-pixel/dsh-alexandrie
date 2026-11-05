@@ -23,11 +23,11 @@ const EDGE = [
 ].find((path) => existsSync(path))
 if (!EDGE) throw new Error('Microsoft Edge not found; install it or edit the EDGE list')
 
-const SAMPLE = join(process.env.TEMP || process.env.TMP || '.', 'axl-shots')
+const SAMPLE = join(process.env.TEMP || process.env.TMP || '.', 'scr-shots')
 const DOCS = fileURLToPath(new URL('../docs/media/', import.meta.url))
 await mkdir(DOCS, { recursive: true })
 
-const home = await mkdtemp(join(tmpdir(), 'axl-shots-'))
+const home = await mkdtemp(join(tmpdir(), 'scr-shots-'))
 process.env.DSH_HOME = home
 
 const stamp = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString()
@@ -38,7 +38,7 @@ const media = {
   lighting: { id: 'media-lighting', name: 'lighting-ref.png', mime: 'image/png', size: 0, createdAt: stamp, uploadedAt: stamp },
 }
 
-const brief = `Alexandrie now runs inside the harness: one panel, one JSON file, zero accounts.
+const brief = `Scriptorium now runs inside the harness: one panel, one JSON file, zero accounts.
 
 ## Why we built it
 
@@ -65,7 +65,7 @@ Next: [[Architecture notes]] and [[Agent memory, one library at a time]].`
 
 const architecture = `Two halves, one route prefix.
 
-::: note The browser half never touches the disk. It calls /dsh-alexandrie/* and renders the envelope it gets back.
+::: note The browser half never touches the disk. It calls /dsh-scriptorium/* and renders the envelope it gets back.
 :::
 
 ## Host half
@@ -85,7 +85,7 @@ const routing = `A single route prefix beats five endpoints with different shape
 
 ## The decision
 
-- /dsh-alexandrie/* owns state, projects, media and archives
+- /dsh-scriptorium/* owns state, projects, media and archives
 - the client never builds file paths
 - every failure returns { ok: false, error: { message } }
 
@@ -167,34 +167,34 @@ const node = (id, workspaceId, title, content, extra) =>
   )
 
 const nodes = [
-  node('doc-brief', 'ws-alexandrie', 'Release brief — v1.0', brief, {
+  node('doc-brief', 'ws-scriptorium', 'Release brief — v1.0', brief, {
     status: 'active',
     tags: ['release', 'plugin'],
     favorite: true,
     order: 0,
     media: [media.onboarding, media.chart],
   }),
-  node('doc-architecture', 'ws-alexandrie', 'Architecture notes', architecture, {
+  node('doc-architecture', 'ws-scriptorium', 'Architecture notes', architecture, {
     status: 'active',
     tags: ['architecture'],
     order: 1,
     media: [media.sketch],
   }),
-  node('doc-memory', 'ws-alexandrie', 'Agent memory, one library at a time', memory, {
+  node('doc-memory', 'ws-scriptorium', 'Agent memory, one library at a time', memory, {
     tags: ['essay'],
     order: 2,
   }),
-  node('doc-shortcuts', 'ws-alexandrie', 'Keyboard shortcuts', shortcuts, {
+  node('doc-shortcuts', 'ws-scriptorium', 'Keyboard shortcuts', shortcuts, {
     status: 'done',
     tags: ['reference'],
     favorite: true,
     order: 3,
   }),
-  node('doc-checklist', 'ws-alexandrie', 'Release checklist', checklist, {
+  node('doc-checklist', 'ws-scriptorium', 'Release checklist', checklist, {
     tags: ['release'],
     order: 4,
   }),
-  node('doc-routing', 'ws-alexandrie', 'Routing decision', routing, {
+  node('doc-routing', 'ws-scriptorium', 'Routing decision', routing, {
     status: 'active',
     tags: ['architecture'],
     order: 5,
@@ -230,12 +230,12 @@ const snapshot = {
   version: 1,
   workspaces: [
     {
-      id: 'ws-alexandrie',
-      name: 'Alexandrie',
+      id: 'ws-scriptorium',
+      name: 'Scriptorium',
       icon: 'book',
       color: 'brand',
-      projectId: 'p-alexandrie',
-      path: 'C:\\\\Users\\\\Santera\\\\Documents\\\\deepseek-harness\\\\default-workspace\\\\dsh-alexandrie',
+      projectId: 'p-scriptorium',
+      path: 'C:\\\\Users\\\\Santera\\\\Documents\\\\deepseek-harness\\\\default-workspace\\\\dsh-scriptorium',
       createdAt: stamp,
       updatedAt: stamp,
     },
@@ -252,18 +252,18 @@ const snapshot = {
   ],
   nodes,
   settings: { view: 'list', editorMode: 'split', fontSize: 15, autoSave: true, showLineNumbers: true, sort: 'manual' },
-  ui: { activeWorkspaceId: 'ws-alexandrie', activeNodeId: 'doc-brief', expanded: [] },
+  ui: { activeWorkspaceId: 'ws-scriptorium', activeNodeId: 'doc-brief', expanded: [] },
   canvas,
   graph: { showTags: false, showLabels: true, scopeAll: false },
 }
 
 const workspaceFile = {
-  global: { defaultWorkspaceId: 'p-alexandrie', workspaceIds: ['p-alexandrie', 'p-living'] },
+  global: { defaultWorkspaceId: 'p-scriptorium', workspaceIds: ['p-scriptorium', 'p-living'] },
   tables: {
     workspaces: {
-      'p-alexandrie': {
-        path: 'C:\\Users\\Santera\\Documents\\deepseek-harness\\default-workspace\\dsh-alexandrie',
-        title: 'Alexandrie',
+      'p-scriptorium': {
+        path: 'C:\\Users\\Santera\\Documents\\deepseek-harness\\default-workspace\\dsh-scriptorium',
+        title: 'Scriptorium',
         sessionIds: [],
       },
       'p-living': {
@@ -276,16 +276,16 @@ const workspaceFile = {
 }
 
 // ---- fixture on disk ------------------------------------------------------------------------
-await mkdir(join(home, 'alexandrie', 'media'), { recursive: true })
+await mkdir(join(home, 'scriptorium', 'media'), { recursive: true })
 await mkdir(join(home, 'storages'), { recursive: true })
 await writeFile(join(home, 'storages', 'workspace.json'), JSON.stringify(workspaceFile, null, 2))
 for (const [key, entry] of Object.entries(media)) {
   const bytes = await readFile(join(SAMPLE, key + '.png'))
   entry.size = bytes.length
-  await copyFile(join(SAMPLE, key + '.png'), join(home, 'alexandrie', 'media', entry.id))
-  await writeFile(join(home, 'alexandrie', 'media', entry.id + '.json'), JSON.stringify(entry))
+  await copyFile(join(SAMPLE, key + '.png'), join(home, 'scriptorium', 'media', entry.id))
+  await writeFile(join(home, 'scriptorium', 'media', entry.id + '.json'), JSON.stringify(entry))
 }
-await writeFile(join(home, 'alexandrie', 'data.json'), JSON.stringify({ version: 1, revision: 7, updatedAt: stamp, snapshot }, null, 2))
+await writeFile(join(home, 'scriptorium', 'data.json'), JSON.stringify({ version: 1, revision: 7, updatedAt: stamp, snapshot }, null, 2))
 
 // ---- real host + route ----------------------------------------------------------------------
 const { apply } = await import('../lib/index.js')
@@ -394,7 +394,7 @@ function press(key, init) {
 
 window.addEventListener('error', (event) => console.error('page error: ' + (event.error && event.error.stack ? event.error.stack : event.message)))
 try {
-  await waitFor(() => q('.dsh-axl-root') && (document.body.textContent || '').includes('Release brief'), 10000, 'panel + fixture')
+  await waitFor(() => q('.dsh-scr-root') && (document.body.textContent || '').includes('Release brief'), 10000, 'panel + fixture')
 } catch (error) {
   console.error('BODY: ' + document.body.innerHTML.slice(0, 2500))
   throw error
@@ -454,19 +454,19 @@ async function shoot(name, width, height, scale) {
 await shoot('workspace', 1440, 900, 1.5)
 
 press('k', { ctrlKey: true })
-await waitFor(() => q('.dsh-axl-palette-backdrop'), 4000, 'command palette')
+await waitFor(() => q('.dsh-scr-palette-backdrop'), 4000, 'command palette')
 await delay(500)
 await shoot('search', 1440, 900, 1.5)
 press('Escape')
-await waitFor(() => q('.dsh-axl-palette-backdrop') === null, 3000, 'palette closed')
+await waitFor(() => q('.dsh-scr-palette-backdrop') === null, 3000, 'palette closed')
 
-click(byText('.dsh-axl-seg-btn', 'Media'))
-await waitFor(() => q('.dsh-axl-media-library'), 5000, 'media view')
+click(byText('.dsh-scr-seg-btn', 'Media'))
+await waitFor(() => q('.dsh-scr-media-library'), 5000, 'media view')
 await delay(400)
 await shoot('media', 1440, 900, 1.5)
 
-click(byText('.dsh-axl-seg-btn', 'Canvas'))
-await waitFor(() => q('.dsh-axl-canvas'), 5000, 'canvas view')
+click(byText('.dsh-scr-seg-btn', 'Canvas'))
+await waitFor(() => q('.dsh-scr-canvas'), 5000, 'canvas view')
 await delay(400)
 await shoot('canvas', 1440, 900, 1.5)
 
@@ -477,15 +477,15 @@ const realRect = window.Element.prototype.getBoundingClientRect
 window.Element.prototype.getBoundingClientRect = function () {
   return { x: 272, y: 56, top: 56, left: 272, right: 1392, bottom: 856, width: 1120, height: 800, toJSON() { return this } }
 }
-click(byText('.dsh-axl-seg-btn', 'Graph'))
-await waitFor(() => q('.dsh-axl-graph'), 5000, 'graph view')
-await waitFor(() => qa('.dsh-axl-graph-node').length > 3, 5000, 'graph nodes')
+click(byText('.dsh-scr-seg-btn', 'Graph'))
+await waitFor(() => q('.dsh-scr-graph'), 5000, 'graph view')
+await waitFor(() => qa('.dsh-scr-graph-node').length > 3, 5000, 'graph nodes')
 await delay(1800)
 await shoot('graph', 1440, 900, 1.5)
 window.Element.prototype.getBoundingClientRect = realRect
 
-click(byText('.dsh-axl-seg-btn', 'Board'))
-await waitFor(() => q('.dsh-axl-board-cols'), 5000, 'board view')
+click(byText('.dsh-scr-seg-btn', 'Board'))
+await waitFor(() => q('.dsh-scr-board-cols'), 5000, 'board view')
 await delay(400)
 await shoot('board', 1440, 900, 1.5)
 
@@ -529,13 +529,13 @@ const hero = `<!doctype html><html><head><meta charset="utf-8"><style>
 </style></head><body><div class="wrap">
   <div>
     <div class="eyebrow">DeepSeek Harness plugin</div>
-    <h1>Alexandrie<span>A project notebook that lives inside the harness: notes, screenshots, a canvas and a mind graph, in one panel.</span></h1>
+    <h1>Scriptorium<span>A project notebook that lives inside the harness: notes, screenshots, a canvas and a mind graph, in one panel.</span></h1>
     <ul>
       <li><i class="dot"></i><span><b>Notes</b> with a live Markdown preview</span></li>
       <li><i class="dot"></i><span><b>Screenshots</b> attached to the note they belong to</span></li>
       <li><i class="dot"></i><span><b>Canvas</b> and mind graph over the same library</span></li>
     </ul>
-    <div class="install"><i>&gt;</i> dsh plugin --profile web add dsh-alexandrie</div>
+    <div class="install"><i>&gt;</i> dsh plugin --profile web add dsh-scriptorium</div>
   </div>
   <div class="shot">
     <div class="frame"><div class="bar"><i></i><i></i><i></i></div><img src="data:image/png;base64,${canvasShot}"></div>

@@ -26,7 +26,7 @@ const check = (title, fn) => {
   })
 }
 
-const home = await mkdtemp(join(tmpdir(), 'axl-http-'))
+const home = await mkdtemp(join(tmpdir(), 'scr-http-'))
 process.env.DSH_HOME = home
 
 const routes = []
@@ -45,7 +45,7 @@ apply(ctx)
 assert.equal(routes.length, 1, 'host half registers exactly one prefix route')
 const route = routes[0]
 assert.equal(route.kind, 'prefix')
-assert.equal(route.path, '/dsh-alexandrie')
+assert.equal(route.path, '/dsh-scriptorium')
 
 const server = http.createServer((request, response) => {
   Promise.resolve(route.handler(request, response)).catch((error) => {
@@ -63,7 +63,7 @@ function request(path, options = {}) {
       {
         host: '127.0.0.1',
         port,
-        path: '/dsh-alexandrie' + path,
+        path: '/dsh-scriptorium' + path,
         method: options.method || 'GET',
         headers: Object.assign({}, options.headers, body === null ? {} : { 'content-length': body.length }),
       },
@@ -151,7 +151,7 @@ check('health names the data file inside DSH_HOME', async () => {
   assert.equal(result.status, 200)
   assert.equal(result.json.ok, true)
   assert.ok(result.json.value.file.startsWith(home), 'file lives under the temp DSH_HOME')
-  assert.match(result.json.value.file, /alexandrie[\\/]data\.json$/)
+  assert.match(result.json.value.file, /scriptorium[\\/]data\.json$/)
 })
 
 check('projects are mirrored from storages/workspace.json, read-only and degradable', async () => {
@@ -260,7 +260,7 @@ check('ZIP export streams a readable archive with manifest, note and media', asy
   const result = await request('/archive/export')
   assert.equal(result.status, 200)
   assert.equal(result.headers['content-type'], 'application/zip')
-  assert.match(String(result.headers['content-disposition']), /attachment; filename="alexandrie-/)
+  assert.match(String(result.headers['content-disposition']), /attachment; filename="scriptorium-/)
   assert.equal(result.raw.subarray(0, 2).toString('latin1'), 'PK')
   const names = parseZip(result.raw).map((entry) => entry.name)
   assert.ok(names.includes('manifest.json'))

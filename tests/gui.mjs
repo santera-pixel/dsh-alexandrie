@@ -28,7 +28,7 @@ const check = (title, fn) => {
 }
 
 const realFetch = globalThis.fetch
-const home = await mkdtemp(join(tmpdir(), 'axl-gui-'))
+const home = await mkdtemp(join(tmpdir(), 'scr-gui-'))
 process.env.DSH_HOME = home
 
 // ---- a throwaway host with the real routes ------------------------------------------------
@@ -57,7 +57,7 @@ const { port } = server.address()
 const baseUrl = `http://127.0.0.1:${port}`
 
 async function hostState() {
-  const response = await realFetch(baseUrl + '/dsh-alexandrie/state')
+  const response = await realFetch(baseUrl + '/dsh-scriptorium/state')
   const payload = await response.json()
   return payload.value
 }
@@ -179,17 +179,17 @@ const docsOf = (state) => state.snapshot.nodes.filter((node) => node.kind === 'd
 
 // ---- checks --------------------------------------------------------------------------------
 check('the panel mounts, seeds the sample workspace and loads it from the host', async () => {
-  await waitFor(() => text().includes('Welcome to Alexandrie'), 5000, 'seeded workspace')
+  await waitFor(() => text().includes('Welcome to Scriptorium'), 5000, 'seeded workspace')
   const state = await waitForState((value) => value.snapshot !== null && value.snapshot.workspaces.length === 1, 5000, 'seeded host state')
   assert.equal(docsOf(state).length, 3)
-  assert.ok(q('.dsh-axl-root'), 'root element rendered')
-  assert.ok(q('.dsh-axl-sidebar'), 'sidebar rendered')
-  assert.ok(q('.dsh-axl-panel'), 'panel wrapper rendered')
+  assert.ok(q('.dsh-scr-root'), 'root element rendered')
+  assert.ok(q('.dsh-scr-sidebar'), 'sidebar rendered')
+  assert.ok(q('.dsh-scr-panel'), 'panel wrapper rendered')
 })
 
 check('creating a document through the header button opens the editor', async () => {
   click(byLabel('New document (Ctrl+N)'))
-  await waitFor(() => q('.dsh-axl-textarea'), 4000, 'editor textarea')
+  await waitFor(() => q('.dsh-scr-textarea'), 4000, 'editor textarea')
   const title = q('[aria-label="Document title"]')
   assert.ok(title, 'title input exists')
   type(title, 'GUI smoke test')
@@ -205,41 +205,41 @@ check('creating a document through the header button opens the editor', async ()
 
 check('typing markdown updates the live preview and reaches disk', async () => {
   const body = '# GUI heading\n\nSome **bold** text and a table:\n\n| col | val |\n| --- | --- |\n| a | 42 |\n\n- [ ] pending task\n'
-  type(q('.dsh-axl-textarea'), body)
-  await waitFor(() => (q('.dsh-axl-md') ? q('.dsh-axl-md').textContent.includes('GUI heading') : false), 4000, 'preview heading')
-  const preview = q('.dsh-axl-md')
+  type(q('.dsh-scr-textarea'), body)
+  await waitFor(() => (q('.dsh-scr-md') ? q('.dsh-scr-md').textContent.includes('GUI heading') : false), 4000, 'preview heading')
+  const preview = q('.dsh-scr-md')
   assert.ok(preview.querySelector('table'), 'preview renders the table element')
   assert.ok(preview.textContent.includes('42'), 'preview renders table cells')
-  assert.ok(q('.dsh-axl-md-task'), 'task list checkbox rendered')
+  assert.ok(q('.dsh-scr-md-task'), 'task list checkbox rendered')
   await delay(1200)
   const state = await hostState()
   const saved = docsOf(state).find((node) => node.title === 'GUI smoke test')
   assert.ok(saved && saved.content.includes('GUI heading'), 'content reached data.json through /save')
-  const raw = await readFile(join(home, 'alexandrie', 'data.json'), 'utf8')
+  const raw = await readFile(join(home, 'scriptorium', 'data.json'), 'utf8')
   assert.ok(raw.includes('GUI heading'), 'the file on disk contains the new content')
 })
 
 check('Ctrl+K opens the command palette and Escape closes it', async () => {
   press(null, 'k', { ctrlKey: true })
-  await waitFor(() => q('.dsh-axl-palette-backdrop'), 3000, 'command palette')
+  await waitFor(() => q('.dsh-scr-palette-backdrop'), 3000, 'command palette')
   assert.ok(text().includes('New document'), 'palette lists commands')
   press(null, 'Escape')
-  await waitFor(() => q('.dsh-axl-palette-backdrop') === null, 3000, 'palette closed')
+  await waitFor(() => q('.dsh-scr-palette-backdrop') === null, 3000, 'palette closed')
 })
 
 check('search finds the new document and Enter opens it', async () => {
   click(byText('button', 'Search documents'))
-  const input = await waitFor(() => q('.dsh-axl-search-input'), 3000, 'search overlay input')
+  const input = await waitFor(() => q('.dsh-scr-search-input'), 3000, 'search overlay input')
   type(input, 'GUI smoke')
-  await waitFor(() => q('.dsh-axl-search-hit'), 3000, 'highlighted hit')
+  await waitFor(() => q('.dsh-scr-search-hit'), 3000, 'highlighted hit')
   press(input, 'Enter')
   await waitFor(() => q('[aria-label="Document title"]') && q('[aria-label="Document title"]').value === 'GUI smoke test', 4000, 'picked document')
 })
 
 check('the board shows the document and its move button changes the status on the host', async () => {
-  click(byText('.dsh-axl-seg-btn', 'Board'))
-  await waitFor(() => q('.dsh-axl-board-cols'), 3000, 'board columns')
-  const card = qa('.dsh-axl-board-card').find((el) => (el.textContent || '').includes('GUI smoke test'))
+  click(byText('.dsh-scr-seg-btn', 'Board'))
+  await waitFor(() => q('.dsh-scr-board-cols'), 3000, 'board columns')
+  const card = qa('.dsh-scr-board-card').find((el) => (el.textContent || '').includes('GUI smoke test'))
   assert.ok(card, 'the document appears as a board card')
   const move = card.querySelector('[aria-label="Move to Active"]')
   assert.ok(move, 'the draft card can move forward')
@@ -248,21 +248,21 @@ check('the board shows the document and its move button changes the status on th
   const state = await hostState()
   const moved = docsOf(state).find((node) => node.title === 'GUI smoke test')
   assert.equal(moved.status, 'active', 'the new status persisted')
-  assert.ok(qa('.dsh-axl-board-card').length >= 3, 'the other cards are still rendered')
+  assert.ok(qa('.dsh-scr-board-card').length >= 3, 'the other cards are still rendered')
 })
 
 check('trash and restore round-trip through the views', async () => {
-  click(byText('.dsh-axl-seg-btn', 'Documents'))
-  const opened = await waitFor(() => q('.dsh-axl-doc-head [aria-label="Move to trash"]') || qa('.dsh-axl-list-row').find((el) => (el.textContent || '').includes('GUI smoke test')), 4000, 'a way into the document')
-  if (!q('.dsh-axl-doc-head [aria-label="Move to trash"]')) {
+  click(byText('.dsh-scr-seg-btn', 'Documents'))
+  const opened = await waitFor(() => q('.dsh-scr-doc-head [aria-label="Move to trash"]') || qa('.dsh-scr-list-row').find((el) => (el.textContent || '').includes('GUI smoke test')), 4000, 'a way into the document')
+  if (!q('.dsh-scr-doc-head [aria-label="Move to trash"]')) {
     click(opened)
-    await waitFor(() => q('.dsh-axl-doc-head [aria-label="Move to trash"]'), 4000, 'editor trash button')
+    await waitFor(() => q('.dsh-scr-doc-head [aria-label="Move to trash"]'), 4000, 'editor trash button')
   }
-  click(q('.dsh-axl-doc-head [aria-label="Move to trash"]'))
+  click(q('.dsh-scr-doc-head [aria-label="Move to trash"]'))
   await delay(250)
-  click(byText('.dsh-axl-tree-row', 'Trash'))
+  click(byText('.dsh-scr-tree-row', 'Trash'))
   const trashed = await waitFor(
-    () => qa('.dsh-axl-list-row').find((el) => (el.textContent || '').includes('GUI smoke test')),
+    () => qa('.dsh-scr-list-row').find((el) => (el.textContent || '').includes('GUI smoke test')),
     4000,
     'trashed document row',
   )
@@ -270,7 +270,7 @@ check('trash and restore round-trip through the views', async () => {
   assert.ok(restore, 'restore button present')
   click(restore)
   await waitFor(
-    () => !qa('.dsh-axl-list-row').some((el) => (el.textContent || '').includes('GUI smoke test')),
+    () => !qa('.dsh-scr-list-row').some((el) => (el.textContent || '').includes('GUI smoke test')),
     4000,
     'row leaves the trash',
   )
@@ -282,7 +282,7 @@ check('trash and restore round-trip through the views', async () => {
 
 check('the settings modal persists a font-size change', async () => {
   click(byLabel('Settings'))
-  const dialog = await waitFor(() => q('[role="dialog"][aria-label="Alexandrie settings"]'), 3000, 'settings dialog')
+  const dialog = await waitFor(() => q('[role="dialog"][aria-label="Scriptorium settings"]'), 3000, 'settings dialog')
   assert.ok(dialog.textContent.includes('Storage'), 'storage row present')
   const range = dialog.querySelector('input[type="range"]')
   assert.ok(range, 'font size slider present')
@@ -291,18 +291,18 @@ check('the settings modal persists a font-size change', async () => {
   const state = await hostState()
   assert.equal(state.snapshot.settings.fontSize, 17, 'the setting persisted')
   click(byText('button', 'Done'))
-  await waitFor(() => q('[role="dialog"][aria-label="Alexandrie settings"]') === null, 3000, 'dialog closed')
+  await waitFor(() => q('[role="dialog"][aria-label="Scriptorium settings"]') === null, 3000, 'dialog closed')
 })
 
 check('an attachment uploads through the editor and lands on the canvas', async () => {
-  click(byText('.dsh-axl-seg-btn', 'Documents'))
+  click(byText('.dsh-scr-seg-btn', 'Documents'))
   await delay(250)
-  if (!q('.dsh-axl-editor-media')) {
-    const row = await waitFor(() => qa('.dsh-axl-list-row').find((el) => (el.textContent || '').includes('GUI smoke test')), 4000, 'document row')
+  if (!q('.dsh-scr-editor-media')) {
+    const row = await waitFor(() => qa('.dsh-scr-list-row').find((el) => (el.textContent || '').includes('GUI smoke test')), 4000, 'document row')
     click(row)
   }
-  await waitFor(() => q('.dsh-axl-editor-media'), 4000, 'attachments section')
-  const input = q('.dsh-axl-editor-media input[type="file"]')
+  await waitFor(() => q('.dsh-scr-editor-media'), 4000, 'attachments section')
+  const input = q('.dsh-scr-editor-media input[type="file"]')
   assert.ok(input, 'attachment file input exists')
   const file = new window.File([new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10])], 'shot.png', { type: 'image/png' })
   Object.defineProperty(input, 'files', { value: [file], configurable: true })
@@ -312,11 +312,11 @@ check('an attachment uploads through the editor and lands on the canvas', async 
   assert.equal(doc.media.length, 1, 'the media entry was persisted on the document')
   assert.ok(state.snapshot.canvas.items.length >= 2, 'the upload also placed the attachment and its document on the canvas')
 
-  click(byText('.dsh-axl-seg-btn', 'Canvas'))
-  await waitFor(() => q('.dsh-axl-canvas'), 4000, 'canvas root')
-  const cards = qa('.dsh-axl-canvas-card')
+  click(byText('.dsh-scr-seg-btn', 'Canvas'))
+  await waitFor(() => q('.dsh-scr-canvas'), 4000, 'canvas root')
+  const cards = qa('.dsh-scr-canvas-card')
   assert.ok(cards.length >= 2, 'the canvas shows the attachment and its owning document')
-  assert.ok(q('.dsh-axl-canvas-edge'), 'the owning document is linked to its attachment')
+  assert.ok(q('.dsh-scr-canvas-edge'), 'the owning document is linked to its attachment')
 
   const media = q('[data-canvas-item^="media:"]')
   assert.ok(media, 'the attachment card is present')
@@ -330,32 +330,32 @@ check('an attachment uploads through the editor and lands on the canvas', async 
   assert.ok(movedItem.y > 80, 'the dragged card moved vertically too')
 
   click(byLabel('Zoom in'))
-  await waitFor(() => (q('.dsh-axl-canvas-stage').getAttribute('style') || '').includes('scale(1.2'), 2000, 'zoomed stage')
+  await waitFor(() => (q('.dsh-scr-canvas-stage').getAttribute('style') || '').includes('scale(1.2'), 2000, 'zoomed stage')
 })
 
 check('the mind graph maps the notes and can create a new connection', async () => {
-  click(byText('.dsh-axl-seg-btn', 'Graph'))
-  await waitFor(() => q('.dsh-axl-graph'), 4000, 'graph root')
-  const nodes = await waitFor(() => (qa('.dsh-axl-graph-node').length >= 4 ? qa('.dsh-axl-graph-node') : null), 4000, 'graph nodes')
+  click(byText('.dsh-scr-seg-btn', 'Graph'))
+  await waitFor(() => q('.dsh-scr-graph'), 4000, 'graph root')
+  const nodes = await waitFor(() => (qa('.dsh-scr-graph-node').length >= 4 ? qa('.dsh-scr-graph-node') : null), 4000, 'graph nodes')
   assert.ok(nodes.some((el) => (el.textContent || '').includes('GUI smoke test')), 'the new note is a graph node')
 
   const source = nodes.find((el) => (el.textContent || '').includes('GUI smoke test'))
-  const target = nodes.find((el) => (el.textContent || '').includes('Welcome to Alexandrie'))
+  const target = nodes.find((el) => (el.textContent || '').includes('Welcome to Scriptorium'))
   assert.ok(source && target, 'both endpoints exist')
   click(source)
-  await waitFor(() => qa('.dsh-axl-graph-node.is-selected').length === 1, 2000, 'source note selected')
+  await waitFor(() => qa('.dsh-scr-graph-node.is-selected').length === 1, 2000, 'source note selected')
   click(byLabel('Connect two notes'))
-  await waitFor(() => qa('.dsh-axl-graph-node.is-connect-source').length === 1, 2000, 'link mode armed from the selection')
+  await waitFor(() => qa('.dsh-scr-graph-node.is-connect-source').length === 1, 2000, 'link mode armed from the selection')
   click(target)
   await delay(1200)
   const state = await hostState()
   const edited = docsOf(state).find((node) => node.title === 'GUI smoke test')
-  assert.ok(edited.content.includes('[[Welcome to Alexandrie]]'), 'the connection was written as a wiki link')
-  await waitFor(() => qa('.dsh-axl-graph-edge').length >= 1, 3000, 'graph edge after connecting')
+  assert.ok(edited.content.includes('[[Welcome to Scriptorium]]'), 'the connection was written as a wiki link')
+  await waitFor(() => qa('.dsh-scr-graph-edge').length >= 1, 3000, 'graph edge after connecting')
 
   const query = q('[aria-label="Filter notes in the graph"]')
   type(query, 'GUI')
-  await waitFor(() => qa('.dsh-axl-graph-node.is-dim').length > 0, 2000, 'non-matching nodes dim')
+  await waitFor(() => qa('.dsh-scr-graph-node.is-dim').length > 0, 2000, 'non-matching nodes dim')
 })
 
 for (const run of pending) await run()

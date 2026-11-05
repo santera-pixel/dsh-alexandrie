@@ -81,7 +81,7 @@ const snapshot = {
   workspaces: [{ id: 'ws-1', name: 'Studio' }, { id: 'ws-2', name: 'Other' }],
   nodes: [
     doc('doc-a', 'Alpha', 'Links to [[Beta]] and [[ beta |the second]] and [[Gamma#Intro]].\n\n[explicit](note:doc-b)'),
-    doc('doc-b', 'Beta', '[back](alexandrie://doc-a) plus [[Missing note]] and ![[Gamma]]', { tags: ['x', 'y'] }),
+    doc('doc-b', 'Beta', '[back](scriptorium://doc-a) plus [[Missing note]] and ![[Gamma]]', { tags: ['x', 'y'] }),
     doc('doc-c', 'Gamma', 'No outgoing links, but [[Gamma]] is a self link.', { tags: ['x'] }),
     doc('doc-d', 'Delta', 'Cross-workspace [[Alpha]]', { workspaceId: 'ws-2' }),
     doc('doc-z', 'Zombie', '[[Alpha]]', { trashed: true }),
@@ -103,8 +103,8 @@ check('wiki links parse title, heading, alias and embed', () => {
 })
 
 check('markdown note links parse both schemes', () => {
-  const links = graphModel.graphLinksOf('[a](note:doc-1) [b](alexandrie://doc-2)')
-  equal(links.map((link) => link.target), ['doc-1', 'doc-2'])
+  const links = graphModel.graphLinksOf('[a](note:doc-1) [b](scriptorium://doc-2) [c](alexandrie://doc-3)')
+  equal(links.map((link) => link.target), ['doc-1', 'doc-2', 'doc-3'])
   equal(links.every((link) => link.kind === 'markdown'), true)
 })
 

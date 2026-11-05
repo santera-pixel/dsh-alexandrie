@@ -1,7 +1,7 @@
-# dsh-alexandrie bundle patch: inserts the plugin row into the web profile roster.
+# dsh-scriptorium bundle patch: inserts the plugin row into the web profile roster.
 # The node half (exports ".") runs in the host process and owns the JSON store plus
-# the /dsh-alexandrie HTTP routes; the `dsh.client` declaration in package.json makes
+# the /dsh-scriptorium HTTP routes; the `dsh.client` declaration in package.json makes
 # the browser half (exports "./client") load inside the DSH Web GUI.
 - insert:
-    - id: dsh-alexandrie
-      name: dsh-alexandrie
+    - id: dsh-scriptorium
+      name: dsh-scriptorium

@@ -14,7 +14,7 @@ const parts = fs
 
 const exposed =
   'App, Sidebar, DocumentList, FolderView, DocumentEditor, KanbanBoard, SearchOverlay, CommandPalette, ' +
-  'SettingsModal, EmptyState, AlexandriePanel, PanelBoundary, MediaLibrary, MediaPreview, MediaGrid, MediaCanvas, MindGraph, apply'
+  'SettingsModal, EmptyState, ScriptoriumPanel, PanelBoundary, MediaLibrary, MediaPreview, MediaGrid, MediaCanvas, MindGraph, apply'
 
 const source =
   parts.map((name) => fs.readFileSync(path.join(clientDir, name), 'utf8')).join('\n') +
@@ -126,7 +126,7 @@ const storeState = {
   error: null,
   saveState: 'saved',
   saveError: null,
-  storage: { directory: 'C:\\Users\\x\\.dsh\\alexandrie', file: 'data.json', exists: true, size: 2048 },
+  storage: { directory: 'C:\\Users\\x\\.dsh\\scriptorium', file: 'data.json', exists: true, size: 2048 },
 }
 const calls = []
 const store = {
@@ -280,9 +280,9 @@ check('apply registers the main panel and the sidebar entry', () => {
   const regs = registrations.filter((entry) => entry.kind === 'register')
   if (regs.length !== 2) throw new Error('expected 2 registrations, got ' + regs.length + ': ' + JSON.stringify(registrations))
   const main = regs.find((entry) => entry.spec.name === 'main')
-  if (!main || main.spec.key !== 'dsh-alexandrie') throw new Error('main slot key: ' + JSON.stringify(main && main.spec))
+  if (!main || main.spec.key !== 'dsh-scriptorium') throw new Error('main slot key: ' + JSON.stringify(main && main.spec))
   const row = regs.find((entry) => entry.spec.name === 'sidebar.panellist')
-  if (!row || row.spec.id !== 'dsh-alexandrie' || row.spec.order !== 12) throw new Error('sidebar spec: ' + JSON.stringify(row && row.spec))
+  if (!row || row.spec.id !== 'dsh-scriptorium' || row.spec.order !== 12) throw new Error('sidebar spec: ' + JSON.stringify(row && row.spec))
   if (typeof row.spec.label() !== 'string') throw new Error('label factory must return a string')
   if (typeof main.component !== 'function') throw new Error('main slot must receive the panel component')
 })
@@ -324,8 +324,8 @@ check('Sidebar renders project notebooks, missing chips and unlinked projects', 
   })
   if (!textHas('Alpha') || !textHas('Beta') || !textHas('Loose notes')) throw new Error('project rows missing: ' + lastRender.text.join('|'))
   if (!textHas('missing')) throw new Error('missing chip not rendered')
-  if (!classHas('dsh-axl-ws-path')) throw new Error('project path subline not rendered')
-  if (!classHas('dsh-axl-ws-link')) throw new Error('unlinked project picker not rendered')
+  if (!classHas('dsh-scr-ws-path')) throw new Error('project path subline not rendered')
+  if (!classHas('dsh-scr-ws-link')) throw new Error('unlinked project picker not rendered')
 })
 check('DocumentList renders live, empty and trashed rows', () => {
   renderWith(api.DocumentList, { nodes: snapshot.nodes, snapshot, actions, onOpen: noop, emptyHint: 'none' })
@@ -347,9 +347,9 @@ check('DocumentEditor renders write and preview modes', () => {
 })
 check('KanbanBoard renders three columns with cards', () => {
   renderCounted(api.KanbanBoard, { store, snapshot, workspaceId: 'ws-1', onOpen: noop })
-  if (!classHas('dsh-axl-board')) throw new Error('missing board root class')
-  if (!classHas('dsh-axl-board-cols')) throw new Error('missing board column container')
-  const columns = lastRender.classes.filter((value) => value.split(/\s+/).includes('dsh-axl-board-col'))
+  if (!classHas('dsh-scr-board')) throw new Error('missing board root class')
+  if (!classHas('dsh-scr-board-cols')) throw new Error('missing board column container')
+  const columns = lastRender.classes.filter((value) => value.split(/\s+/).includes('dsh-scr-board-col'))
   if (columns.length !== 3) throw new Error('expected 3 columns, got ' + columns.length)
   for (const label of ['Draft', 'Active', 'Done']) {
     if (!textHas(label)) throw new Error('missing column label ' + label)
@@ -357,12 +357,12 @@ check('KanbanBoard renders three columns with cards', () => {
   for (const title of ['Welcome', 'Nested']) {
     if (!textHas(title)) throw new Error('missing card title ' + title)
   }
-  if (!classHas('dsh-axl-board-card')) throw new Error('missing card class')
+  if (!classHas('dsh-scr-board-card')) throw new Error('missing card class')
 })
 
 check('KanbanBoard renders empty columns for an empty workspace', () => {
   renderCounted(api.KanbanBoard, { store, snapshot, workspaceId: 'ws-missing', onOpen: noop })
-  const empty = lastRender.classes.filter((value) => value.split(/\s+/).includes('dsh-axl-board-empty'))
+  const empty = lastRender.classes.filter((value) => value.split(/\s+/).includes('dsh-scr-board-empty'))
   if (empty.length !== 3) throw new Error('expected 3 empty placeholders, got ' + empty.length)
 })
 check('SearchOverlay renders results and the empty state', () => {
@@ -388,41 +388,41 @@ check('EmptyState renders with and without an action', () => {
 
 check('MediaLibrary renders the sandbox head, filter chips and both attachments', () => {
   renderCounted(api.MediaLibrary, { snapshot, actions, onPreview: noop })
-  if (!classHas('dsh-axl-media-library')) throw new Error('missing media library root')
+  if (!classHas('dsh-scr-media-library')) throw new Error('missing media library root')
   if (!textHas('Media sandbox')) throw new Error('missing media library title')
-  const tiles = lastRender.classes.filter((value) => value.split(/\s+/).includes('dsh-axl-media-tile'))
+  const tiles = lastRender.classes.filter((value) => value.split(/\s+/).includes('dsh-scr-media-tile'))
   if (tiles.length !== 2) throw new Error('expected 2 attachment tiles, got ' + tiles.length)
   if (!textHas('diagram.png')) throw new Error('missing image attachment name')
   if (!textHas('spec.pdf')) throw new Error('missing pdf attachment name')
 })
 check('MediaPreview renders image and pdf stages', () => {
   renderCounted(api.MediaPreview, { media: snapshot.nodes[0].media[0], onClose: noop })
-  if (!classHas('dsh-axl-media-modal')) throw new Error('missing media modal')
-  if (!classHas('dsh-axl-media-full')) throw new Error('image stage missing')
+  if (!classHas('dsh-scr-media-modal')) throw new Error('missing media modal')
+  if (!classHas('dsh-scr-media-full')) throw new Error('image stage missing')
   renderCounted(api.MediaPreview, { media: snapshot.nodes[0].media[1], onClose: noop })
-  if (!classHas('dsh-axl-media-frame')) throw new Error('pdf iframe missing')
+  if (!classHas('dsh-scr-media-frame')) throw new Error('pdf iframe missing')
   renderCounted(api.MediaPreview, { media: { id: 'm3', name: 'notes.txt', mime: 'text/plain', size: 10 }, onClose: noop })
 })
 check('MediaGrid renders attachments, the empty hint and the add-file control', () => {
   renderCounted(api.MediaGrid, { items: snapshot.nodes[0].media, onPreview: noop, onRemove: noop, onUpload: noop })
-  if (!classHas('dsh-axl-media-drop')) throw new Error('missing add-file control')
+  if (!classHas('dsh-scr-media-drop')) throw new Error('missing add-file control')
   renderCounted(api.MediaGrid, { items: [], emptyHint: 'Nothing attached yet', onUpload: noop })
   if (!textHas('Nothing attached yet')) throw new Error('missing empty hint')
-  if (!classHas('dsh-axl-media-empty')) throw new Error('missing empty placeholder')
+  if (!classHas('dsh-scr-media-empty')) throw new Error('missing empty placeholder')
 })
 check('DocumentEditor renders the attachments section with its files', () => {
   renderCounted(api.DocumentEditor, { store, snapshot, node: api.model.nodeById(snapshot, 'doc-1'), ui: snapshot.ui, actions })
-  if (!classHas('dsh-axl-editor-media')) throw new Error('missing attachments section')
+  if (!classHas('dsh-scr-editor-media')) throw new Error('missing attachments section')
   if (!textHas('Attachments')) throw new Error('missing attachments heading')
-  const tiles = lastRender.classes.filter((value) => value.split(/\s+/).includes('dsh-axl-media-tile'))
+  const tiles = lastRender.classes.filter((value) => value.split(/\s+/).includes('dsh-scr-media-tile'))
   if (tiles.length !== 2) throw new Error('expected 2 attachment tiles in the editor, got ' + tiles.length)
 })
 
 // ---------- canvas and graph views ----------
 check('MediaCanvas renders an empty stage and its toolbar', () => {
   renderCounted(api.MediaCanvas, { store, snapshot, workspaceId: 'ws-1', onOpen() {}, onPreview() {}, notify() {} })
-  if (!classHas('dsh-axl-canvas')) throw new Error('missing canvas root')
-  if (!classHas('dsh-axl-canvas-emptystate')) throw new Error('missing empty state')
+  if (!classHas('dsh-scr-canvas')) throw new Error('missing canvas root')
+  if (!classHas('dsh-scr-canvas-emptystate')) throw new Error('missing empty state')
 })
 
 check('MediaCanvas renders cards for placed attachments and documents', () => {
@@ -435,7 +435,7 @@ check('MediaCanvas renders cards for placed attachments and documents', () => {
     links: [{ id: 'link:a', from: 'media:media-1', to: 'doc:doc-1' }],
   }
   renderCounted(api.MediaCanvas, { store, snapshot: withCanvas, workspaceId: 'ws-1', onOpen() {}, onPreview() {}, notify() {} })
-  const cards = lastRender.classes.filter((value) => value.split(/\s+/).includes('dsh-axl-canvas-card'))
+  const cards = lastRender.classes.filter((value) => value.split(/\s+/).includes('dsh-scr-canvas-card'))
   if (cards.length < 2) throw new Error('expected two canvas cards, got ' + cards.length)
 })
 
@@ -443,8 +443,8 @@ check('MindGraph renders nodes, edges and toolbox', () => {
   const linked = JSON.parse(JSON.stringify(snapshot))
   linked.nodes[0].content = 'See [[Nested]] for details.'
   renderCounted(api.MindGraph, { store, snapshot: linked, workspaceId: 'ws-1', onOpen() {}, onConnect() {}, notify() {} })
-  if (!classHas('dsh-axl-graph')) throw new Error('missing graph root')
-  const nodes = lastRender.classes.filter((value) => value.split(/\s+/).includes('dsh-axl-graph-node'))
+  if (!classHas('dsh-scr-graph')) throw new Error('missing graph root')
+  const nodes = lastRender.classes.filter((value) => value.split(/\s+/).includes('dsh-scr-graph-node'))
   if (nodes.length < 2) throw new Error('expected graph nodes, got ' + nodes.length)
 })
 

@@ -63,7 +63,7 @@ const { normalizeSnapshot } = client
 
 /* ------------------------------------------------------------------ host harness */
 
-const home = await mkdtemp(path.join(tmpdir(), 'axl-compat-'))
+const home = await mkdtemp(path.join(tmpdir(), 'scr-compat-'))
 process.env.DSH_HOME = home
 const routes = []
 apply({
@@ -94,7 +94,7 @@ function request(pathname, options = {}) {
       {
         host: '127.0.0.1',
         port,
-        path: '/dsh-alexandrie' + pathname,
+        path: '/dsh-scriptorium' + pathname,
         method: options.method || 'GET',
         headers: Object.assign({}, options.headers, body === null ? {} : { 'content-length': body.length }),
       },
@@ -119,7 +119,7 @@ function request(pathname, options = {}) {
   })
 }
 
-const dataFile = path.join(home, 'alexandrie', 'data.json')
+const dataFile = path.join(home, 'scriptorium', 'data.json')
 const readDisk = async () => JSON.parse(await readFile(dataFile, 'utf8'))
 
 /**

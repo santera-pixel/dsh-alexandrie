@@ -303,6 +303,14 @@ function createStore() {  const listeners = new Set()
     error: null,
     saveState: 'idle',
     saveError: null,
+    // Set when the host refused a save because another session wrote first. Autosave stays
+    // paused and the panel shows a banner until the user chooses Reload or Overwrite.
+    conflict: null,
+    // One-shot note from the host: that save carried no expectedRevision (compat path).
+    saveWarning: null,
+    // Bumped whenever a host snapshot replaces the local one, so the editor drops keystrokes
+    // it had not flushed yet instead of replaying them onto the fresh copy.
+    resetToken: 0,
     storage: null,
     // DSH projects reported by the host; the plugin never invents or deletes them.
     projects: {
@@ -333,25 +341,144 @@ function createStore() {  const listeners = new Set()
     emit()
   }
 
-  const saveNow = async () => {
-    if (state.status === 'loading') return
+  /**
+   * A save carries the revision this tab last saw. The host answers 409 with the revision it
+   * is actually at, which is the only way the panel can tell "my write is stale" from
+   * "the disk is broken".
+   */
+  const postSave = (expectedRevision) => api('/save', { method: 'POST', body: { snapshot: state.snapshot, expectedRevision } })
+
+  const applySaved = (result) => {
+    state.revision = result.revision
+    state.updatedAt = result.updatedAt
+    state.saveState = 'saved'
+    state.saveError = null
+    state.saveWarning = typeof result.warning === 'string' && result.warning !== '' ? result.warning : null
+  }
+
+  const setConflict = (error) => {
+    state.conflict = {
+      localRevision: state.revision,
+      currentRevision: typeof error.currentRevision === 'number' ? error.currentRevision : null,
+      at: nowIso(),
+    }
+    state.saveState = 'conflict'
+    state.saveError = null
+  }
+
+  const isConflict = (error) => error !== null && typeof error === 'object' && error.code === 'conflict'
+
+  /** One write, leaving the state describing the outcome. */
+  const attemptSave = async () => {
     state.saveState = 'saving'
     state.saveError = null
     emit()
     try {
-      const result = await api('/save', { method: 'POST', body: { snapshot: state.snapshot } })
-      state.revision = result.revision
-      state.updatedAt = result.updatedAt
-      state.saveState = 'saved'
+      applySaved(await postSave(state.revision))
       emit()
     } catch (error) {
+      if (isConflict(error)) {
+        setConflict(error)
+        emit()
+        return
+      }
       state.saveState = 'error'
       state.saveError = (error && error.message) || String(error)
       emit()
     }
   }
 
+  let inFlight = null
+  let queued = false
+
+  /**
+   * Save now. An unresolved conflict pauses writing until the banner decides, and a save that
+   * arrives while another one is in flight is coalesced into one follow-up instead of racing
+   * it: two requests would carry the same expectedRevision and burn the second as a conflict.
+   */
+  const saveNow = () => {
+    if (state.status === 'loading' || state.conflict !== null) return Promise.resolve()
+    if (inFlight !== null) {
+      queued = true
+      return inFlight
+    }
+    inFlight = (async () => {
+      try {
+        do {
+          queued = false
+          await attemptSave()
+        } while (queued && state.conflict === null && state.saveState !== 'error')
+      } finally {
+        inFlight = null
+      }
+    })()
+    return inFlight
+  }
+
   const scheduleSave = debounce(saveNow, SAVE_DEBOUNCE_MS)
+
+  /**
+   * Banner "Reload": take the host copy and drop this tab's unsaved edits, then resume.
+   * The bumped resetToken makes the editor drop keystrokes it had not flushed yet, which
+   * would otherwise land on the fresh snapshot on the next blur.
+   */
+  const reload = async () => {
+    if (state.conflict === null) return false
+    try {
+      const result = await api('/state')
+      state.revision = Number.isInteger(result.revision) ? result.revision : 0
+      state.updatedAt = result.updatedAt || null
+      if (result.snapshot !== null && typeof result.snapshot === 'object') state.snapshot = normalizeSnapshot(result.snapshot)
+      state.conflict = null
+      state.saveError = null
+      state.saveWarning = null
+      state.saveState = 'saved'
+      state.resetToken += 1
+      emit()
+      return true
+    } catch (error) {
+      state.saveState = 'error'
+      state.saveError = (error && error.message) || String(error)
+      emit()
+      return false
+    }
+  }
+
+  /**
+   * Banner "Overwrite": replace the host copy with this tab's snapshot. Exactly one retry,
+   * against the revision the 409 named; a second conflict re-arms the banner instead of
+   * looping, so a busy host can never turn this into a write storm.
+   */
+  const overwrite = async () => {
+    if (state.conflict === null) return 'idle'
+    const target = state.conflict.currentRevision
+    state.saveState = 'saving'
+    state.saveError = null
+    emit()
+    try {
+      applySaved(await postSave(typeof target === 'number' ? target : state.revision))
+      state.conflict = null
+      emit()
+      return 'saved'
+    } catch (error) {
+      if (isConflict(error)) {
+        setConflict(error)
+        emit()
+        return 'conflict'
+      }
+      state.saveState = 'error'
+      state.saveError = (error && error.message) || String(error)
+      emit()
+      return 'error'
+    }
+  }
+
+  /** Drop the one-shot compatibility note once the UI has shown it. */
+  const clearWarning = () => {
+    if (state.saveWarning === null) return
+    state.saveWarning = null
+    emit()
+  }
 
   /** Mutate a clone of the snapshot, then persist on the debounce (or immediately). */
   const commit = (mutator, options = {}) => {
@@ -362,7 +489,8 @@ function createStore() {  const listeners = new Set()
     if (options.immediate === true) {
       scheduleSave.cancel()
       void saveNow()
-    } else if (draft.settings.autoSave !== false) {
+    } else if (draft.settings.autoSave !== false && state.conflict === null) {
+      // Autosave stays paused while a conflict is open: the banner owns the next write.
       scheduleSave()
     }
     return draft
@@ -404,6 +532,8 @@ function createStore() {  const listeners = new Set()
       state.storage = health
       state.revision = result.revision || 0
       state.updatedAt = result.updatedAt || null
+      state.conflict = null
+      state.resetToken += 1
       if (result.snapshot === null || typeof result.snapshot !== 'object') {
         state.snapshot = seedSnapshot()
         state.status = 'ready'
@@ -431,6 +561,9 @@ function createStore() {  const listeners = new Set()
     syncProjects,
     commit,
     saveNow,
+    reload,
+    overwrite,
+    clearWarning,
     replace,
     dispose() {
       scheduleSave.cancel()

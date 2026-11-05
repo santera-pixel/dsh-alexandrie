@@ -218,14 +218,25 @@ function DocumentEditor({ store, snapshot, node, ui, actions }) {
     }
   }, [node.id])
 
+  const resetTokenRef = React.useRef(store.state.resetToken || 0)
+
   React.useEffect(() => {
-    if (currentIdRef.current === node.id) return
+    const token = store.state.resetToken || 0
+    const tokenChanged = token !== resetTokenRef.current
+    const nodeChanged = currentIdRef.current !== node.id
+    if (!tokenChanged && !nodeChanged) return
     scheduleFlush.cancel()
-    flush.current()
+    if (tokenChanged) {
+      // The store took the host copy; the keystrokes it had not flushed are what Reload drops.
+      pendingRef.current = null
+    } else {
+      flush.current()
+    }
+    resetTokenRef.current = token
     currentIdRef.current = node.id
     setTitle(node.title)
     setContent(node.content || '')
-  }, [node.id, node.title, node.content])
+  }, [node.id, node.title, node.content, store.state.resetToken])
 
   const stageContent = (value) => {
     setContent(value)
@@ -395,9 +406,16 @@ function DocumentEditor({ store, snapshot, node, ui, actions }) {
               store.state.saveState === 'saving' && 'is-saving',
               store.state.saveState === 'saved' && 'is-saved',
               store.state.saveState === 'error' && 'is-error',
+              store.state.saveState === 'conflict' && 'is-error',
             ),
           }),
-          store.state.saveState === 'saving' ? 'Saving…' : store.state.saveState === 'error' ? 'Save failed' : 'Saved ' + model.relativeTime(store.state.updatedAt),
+          store.state.saveState === 'conflict'
+            ? 'Unsaved - resolve conflict'
+            : store.state.saveState === 'saving'
+              ? 'Saving…'
+              : store.state.saveState === 'error'
+                ? 'Save failed'
+                : 'Saved ' + model.relativeTime(store.state.updatedAt),
         ),
       ),
     ),

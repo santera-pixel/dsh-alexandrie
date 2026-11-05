@@ -372,7 +372,11 @@ function App({ store }) {
     openSettings: () => setSettingsOpen(true),
     saveNow: () => store.saveNow(),
     reload: () => void store.load(),
-    emptyTrash: () => commit((draft) => { draft.nodes = draft.nodes.filter((node) => node.trashed !== true) }, { immediate: true }),
+    emptyTrash: () => commit((draft) => {
+      // Purge through the model so canvas cards (and the attachments they own) are
+      // removed together with the documents.
+      for (const id of draft.nodes.filter((node) => node.trashed === true).map((node) => node.id)) model.purgeNode(draft, id)
+    }, { immediate: true }),
     exportDocument: (id) => {
       const node = model.nodeById(snapshot, id)
       if (node === null) return

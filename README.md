@@ -58,6 +58,14 @@ Keyboard: `Ctrl+K` palette, `Ctrl+N` new document, `Ctrl+S` save, `Ctrl+B`/`Ctrl
 
 - Documents: `<DSH_HOME>/scriptorium/data.json` (atomic tmp+rename writes, one serialized queue,
   revision counter; oversized or malformed snapshots are rejected with a 400).
+- Snapshots are validated field by field before `POST /save` or a ZIP import can persist them:
+  workspace ids are unique, every node belongs to an existing workspace, parent chains resolve and
+  stay inside one workspace without cycles, tags are non-empty strings, attachment ids are unique
+  and resolvable, canvas cards point at live nodes/attachments with canonical ids, canvas links
+  connect existing cards, and graph preferences are the three known booleans. Errors name the
+  exact path (for example `nodes[12].media[0].id`) and nothing is written when validation fails.
+  A snapshot newer than this build's `STORE_VERSION` is rejected with a clear message; older
+  versions run the ordered migrations first. Unknown top-level blocks are still carried through.
 - Attachments: `<DSH_HOME>/scriptorium/media/<id>` plus a `<id>.json` sidecar with name/mime/size.
   `DSH_HOME` defaults to `~/.dsh`. A directory left by the pre-rename build (`<DSH_HOME>/alexandrie/`)
   is moved into place on first mount, so existing notes, attachments and layout survive the rename.
@@ -168,17 +176,17 @@ what the plugin hub installs — ships without them, and the npm tarball never i
 | `tests/archive.mjs` | ZIP writer/reader round-trip, archive build/parse, id remapping | 8 |
 | `tests/zip-budget.mjs` | hand-built ZIPs prove the reader's safety budgets: ratio, entry-count, declared single-entry and actual single-entry bombs and a declared-total bomb all fail closed, while a legitimate multi-megabyte archive imports | 6 |
 | `tests/canvas-import.mjs` | an exported board survives both import paths: ZIP remap re-points cards/links onto fresh ids, drops dangling/dead references and dedupes; JSON merge keeps the target layout, folds imported cards/links in deterministically | 9 |
-| `tests/compat.mjs` | a pre-canvas `data.json` survives load→save→reload verbatim (old bytes unchanged, 95-byte block overhead, no drift); unknown top-level blocks carried through; no prototype pollution | 7 |
+| `tests/compat.mjs` | a pre-canvas `data.json` survives load→save→reload verbatim (old bytes unchanged, 95-byte block overhead, no drift); unknown top-level blocks carried through; no prototype pollution; nested tag/media/workspace/canvas/parent-cycle rejection with exact paths; newer-version rejection; version-0 migration | 13 |
 | `tests/downgrade.mjs` | a pre-canvas build's fixed-key rewrite of `data.json` is recovered from the layout copy on the next load: positions/sizes/links restored, document edits kept, deleted-document cards pruned, idempotent cycles, export carries the layout | 7 |
 | `tests/projects.mjs` | project sync (create/adopt/rename/missing/idempotent), unsafe ids ignored, linking and merge-into-existing semantics, store project state success/failure | 11 |
 | `tests/migrate.mjs` | the pre-rename data directory is moved into place on mount with documents, attachments, layout copy and revision counter intact; a second mount repeats nothing | 1 |
-| `tests/http.mjs` | the real host half on a throwaway server: state/save, project mirror + malformed file, media, ZIP export/import including the board round-trip, and a bomb import answering 400 without touching the store | 18 |
+| `tests/http.mjs` | the real host half on a throwaway server: state/save, project mirror + malformed file, media, ZIP export/import including the board round-trip, a bomb import answering 400 without touching the store, and nested-validation 400 paths | NN |
 | `tests/export.mjs` | Markdown and JSON download naming and payload | 3 |
 | `tests/gui.mjs` | the built bundle in jsdom against a throwaway host: mount, create, type, preview, Ctrl+K, search, board move, trash/restore, settings, upload→canvas→drag→zoom, graph→connect→filter — asserting on the rendered DOM and on `data.json` | 10 |
 | `tests/battle.mjs` | adversarial pass: 400-operation model fuzz with invariants, hostile canvas payloads, wiki-link abuse, 800-node layout budget, concurrent saves, traversal names, broken archives, 3000-document round-trip | 10 |
 | `tests/live.mjs` | the running harness (health/state/save/conflict/export/projects) | 9 |
 
-253 checks in total (224 node suites, 10 jsdom GUI, 10 adversarial, 9 live).
+TOTAL checks in total (NODE node suites, 10 jsdom GUI, 10 adversarial, 9 live).
 
 The suites live in `tests/` on the **dev** branch. `main` — what GitHub shows, what the hub
 installs and what npm publishes — is `dev` minus `tests/`, so a plain checkout of `main` contains

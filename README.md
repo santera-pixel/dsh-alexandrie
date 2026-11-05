@@ -1,0 +1,174 @@
+# dsh-alexandrie
+
+[![CI](https://github.com/santera-pixel/dsh-alexandrie/actions/workflows/ci.yml/badge.svg)](https://github.com/santera-pixel/dsh-alexandrie/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Topic: dsh-plugin](https://img.shields.io/badge/topic-dsh--plugin-0e7490)](https://github.com/topics/dsh-plugin)
+
+An Alexandrie-style knowledge base inside the DeepSeek Harness Web GUI: project-based workspaces,
+nested documents, a Markdown editor with live preview, full-text search, a command palette, a
+kanban board, a free-form media canvas, an Obsidian-style mind graph, tags, favourites, trash and
+ZIP/JSON archives — all stored in one JSON file on the host that this plugin owns.
+
+The panel lives in the sidebar (book icon, "Alexandrie"). Everything else is one keystroke away.
+
+## What you get
+
+| Area | Behaviour |
+| --- | --- |
+| Organize | Workspaces → folders → nested documents, drag a document onto a folder, inline rename, reorder |
+| Projects | Every notebook mirrors one Harness project from `<DSH_HOME>/storages/workspace.json`: the sidebar lists each project with its path and accent dot, sync creates/renames notebooks, a vanished project is flagged `missing` (its documents are kept), and an unlinked notebook can be linked — or merged into the existing project notebook |
+| Write | Markdown editor: headings, **bold**, *italic*, ~~strike~~, `code`, links, images, tables, task lists, `::: note/tip/warning/danger` callouts, fenced code with a copy button, `$math$`, horizontal rules |
+| Preview | Write / split / preview modes, task checkboxes toggle the source line, scroll sync |
+| Find | `Ctrl+K` command palette (fuzzy, recency-aware) and full-text search with highlighted title/body matches and relevance ranking |
+| Track | Kanban board with Draft / Active / Done columns; drag a card to change its status |
+| Classify | Tags on every document, tag cloud filtering, generated per-tag colours, a per-tag view |
+| Keep | Favourites, soft trash with restore, permanent purge, empty trash |
+| Attachments | Upload images, PDF, audio, video and text files per document; in-app preview modal (PDF via the browser viewer); media sandbox view with kind filters |
+| Canvas | Free-form media canvas: every attachment becomes a draggable, resizable card beside the document that owns it, joined by an edge; pan, wheel/button zoom, fit-to-screen, link two cards, keyboard nudging, delete a link |
+| Connections | Obsidian-style mind graph: notes are nodes, `[[wiki links]]` (with `|alias` and `#heading`) and optional tags are edges; animated force layout, drag nodes, pan/zoom, search dimming, neighbour highlighting, click to open, "connect two notes" writes the link into the source note |
+| Portability | Export JSON, export ZIP (manifest + Markdown notes + media bytes), import JSON (merged, never overwriting) and import ZIP (ids remapped, media stored); the canvas travels both ways and is re-pointed at the imported ids |
+| Feel | Shared animation set (fade, pop, toast, tree expansion), theme-token colours only, `prefers-reduced-motion` respected |
+
+Keyboard: `Ctrl+K` palette, `Ctrl+N` new document, `Ctrl+S` save, `Ctrl+B`/`Ctrl+I` bold/italic,
+`Esc` closes overlays; shortcuts stay out of the way while the caret is inside a field.
+
+## Storage
+
+- Documents: `<DSH_HOME>/alexandrie/data.json` (atomic tmp+rename writes, one serialized queue,
+  revision counter; oversized or malformed snapshots are rejected with a 400).
+- Attachments: `<DSH_HOME>/alexandrie/media/<id>` plus a `<id>.json` sidecar with name/mime/size.
+  `DSH_HOME` defaults to `~/.dsh`.
+- Layout copy: `<DSH_HOME>/alexandrie/layout.json` holds only `canvas` + `graph` and is written
+  before `data.json` on every save. A pre-canvas build rebuilds `data.json` from a fixed key list
+  and never touches this file, so a downgrade cannot destroy the board: the next load merges the
+  layout back (cards whose document was deleted meanwhile are pruned), and the read itself never
+  rewrites `data.json`.
+- Projects: the host reads `<DSH_HOME>/storages/workspace.json` (the same file the Harness
+  workspace switcher uses) and returns `{ projects, defaultProjectId, directory, source, exists }`.
+  The file is read-only for this plugin: notebook names/paths come from `global.workspaceIds`
+  order plus `tables.workspaces` metadata, a missing file yields an empty list, a malformed one
+  yields an empty list plus a warning, and `GET /projects` never touches `data.json`. The legacy
+  single notebook is adopted by the default project on the first sync so existing notes are
+  never stranded, and a project that disappears from the Harness stays in the sidebar flagged
+  `missing` rather than being deleted.
+- Archive shape is additive: a missing `canvas`/`graph` block is filled with empty defaults on load
+  (95 bytes on disk), and a build never erases a top-level block it does not know, so newer
+  features' data survives an older build's save.
+- Imports carry the board: a ZIP import rebuilds every card and link on the freshly remapped
+  document/attachment ids (dead references are dropped, repeated links deduped); a JSON import
+  keeps the local layout untouched and folds the imported cards/links in, idempotently, so the
+  same archive imported twice adds nothing twice.
+
+The browser half never touches the disk: it talks to the plugin's own same-origin route
+(`/dsh-alexandrie/*`) with a `{ ok, value }` / `{ ok: false, error: { message } }` envelope, the
+same proven pattern as the shipped `dsh-taskboard` plugin.
+
+Host routes: `GET /health`, `GET /state`, `GET /projects`, `POST /save`, `GET /export`,
+`GET /archive/export`, `POST /archive/import`, `GET|POST /media`, `GET|DELETE /media/<id>`.
+
+## Install
+
+Repository: <https://github.com/santera-pixel/dsh-alexandrie>
+
+From npm — the one-step command the DSH Plugin Hub runs:
+
+```
+dsh plugin --profile web add dsh-alexandrie
+```
+
+Straight from GitHub (works before any npm publish; npm runs this package's `prepare` script, so
+the browser bundle is rebuilt during install):
+
+```
+dsh plugin --profile web add github:santera-pixel/dsh-alexandrie
+```
+
+From the Web GUI: **Settings → Plugins** and install from a package, or let the agent call
+`plugin_manager` with `install_bundle` and target `dsh-alexandrie` (or a path to a local
+checkout). Whichever route installs it, a page refresh is enough for a client change; the host
+half (`lib/index.js`) is ESM and only reloads on a harness restart.
+
+After installing, open the book icon in the sidebar.
+
+## Compatibility and permissions
+
+- DeepSeek Harness with the Web profile; the client half declares `platform: "web"` and injects
+  only the `slots` service. The host half injects `webServer` and registers routes under
+  `/dsh-alexandrie`.
+- Node.js `>=22` (the host half is dependency-free ESM).
+- No outbound network calls, no telemetry, no third-party embeds.
+- Writes only under `<DSH_HOME>/alexandrie/` (`data.json`, `layout.json`, `media/`). Reads
+  `<DSH_HOME>/storages/workspace.json` read-only to mirror the Harness project list.
+- Caps: 12 MB per attachment, 24 MB per snapshot.
+
+## Publishing to the DSH Plugin Hub
+
+The hub discovers public GitHub repositories that carry the `dsh-plugin` topic and contain a root
+`package.json` with an `apply(ctx)` export. To publish:
+
+1. Push this repository to GitHub and add the **`dsh-plugin`** topic.
+2. `npm publish` (the package is not `private` and sets `publishConfig.access = "public"`); the
+   hub only offers one-step installs for packages that exist on npm.
+3. Optionally install `dsh-plugin` and verify the listing appears under **Settings → Plugin Hub**.
+
+## Build
+
+No bundler and no JSX: `src/client/*.js` are plain-JavaScript parts concatenated, in filename
+order, into `lib/client.js` inside the `window.__ModuleLoader__` factory wrapper.
+
+```
+node build.mjs
+node --check lib/client.js
+```
+
+`lib/index.js` (host half) and `lib/zip.js` / `lib/archive.js` are plain ESM with no dependencies.
+
+## Verification
+
+| Suite | Covers | Checks |
+| --- | --- | --- |
+| `tests/smoke.mjs` | model readers/mutators, markdown rendering, search ranking, store seed/save | 13 |
+| `tests/render.mjs` | every component body under a React shim, all App views, media library/preview/grid, canvas and graph roots, project sidebar groups | 41 |
+| `tests/crud.mjs` | create/rename/move/trash/restore/purge/workspace cascade through the real store | 10 |
+| `tests/editor.mjs` | toolbar transforms, modes, task toggling, sanitising, undo-safe insert | 27 |
+| `tests/interactions.mjs` | search/overlay keyboard, palette recency, board drag, tags, shortcut guards | 23 |
+| `tests/canvas.mjs` | canvas geometry (bounds/fit/zoom anchor), item/link mutators, hostile snapshot sanitising, purge/media cleanup, wide-card placement | 19 |
+| `tests/graph.mjs` | wiki-link parsing, graph building (tags, scope, orphans, undirected dedupe), deterministic force layout including 1000-node spread, zoom/fit maths | 13 |
+| `tests/merge.mjs` | JSON archive parsing and merge semantics (no overwrite, orphan re-rooting) | 8 |
+| `tests/archive.mjs` | ZIP writer/reader round-trip, archive build/parse, id remapping | 8 |
+| `tests/canvas-import.mjs` | an exported board survives both import paths: ZIP remap re-points cards/links onto fresh ids, drops dangling/dead references and dedupes; JSON merge keeps the target layout, folds imported cards/links in deterministically | 9 |
+| `tests/compat.mjs` | a pre-canvas `data.json` survives load→save→reload verbatim (old bytes unchanged, 95-byte block overhead, no drift); unknown top-level blocks carried through; no prototype pollution | 7 |
+| `tests/downgrade.mjs` | a pre-canvas build's fixed-key rewrite of `data.json` is recovered from the layout copy on the next load: positions/sizes/links restored, document edits kept, deleted-document cards pruned, idempotent cycles, export carries the layout | 7 |
+| `tests/projects.mjs` | project sync (create/adopt/rename/missing/idempotent), unsafe ids ignored, linking and merge-into-existing semantics, store project state success/failure | 11 |
+| `tests/http.mjs` | the real host half on a throwaway server: state/save, project mirror + malformed file, media, ZIP export/import including the board round-trip | 17 |
+| `tests/export.mjs` | Markdown and JSON download naming and payload | 3 |
+| `tests/gui.mjs` | the built bundle in jsdom against a throwaway host: mount, create, type, preview, Ctrl+K, search, board move, trash/restore, settings, upload→canvas→drag→zoom, graph→connect→filter — asserting on the rendered DOM and on `data.json` | 10 |
+| `tests/battle.mjs` | adversarial pass: 400-operation model fuzz with invariants, hostile canvas payloads, wiki-link abuse, 800-node layout budget, concurrent saves, traversal names, broken archives, 3000-document round-trip | 10 |
+| `tests/live.mjs` | the running harness (health/state/save/conflict/export/projects) | 9 |
+
+245 checks in total (216 node suites, 10 jsdom GUI, 10 adversarial, 9 live).
+
+Run everything from a checkout (the tests are not part of the npm tarball):
+
+```
+npm install         # jsdom + react for the DOM suites
+npm test            # the fifteen node suites above
+npm run test:battle # adversarial suite only
+npm run test:gui    # real DOM end to end
+npm run test:live   # against the running GUI
+```
+
+`tests/live.mjs` reads the GUI URL from `DSH_WEB_URL` (it defaults to the current harness port).
+
+## Limitations
+
+- The GUI shell answers `401` to plain HTTP without a browser session, so visual end-to-end
+  checking is manual: the automated evidence is the component tree, the host route suite and the
+  slot-registration check (`main` key + `sidebar.panellist` row).
+- Media previews depend on the browser: PDFs use the built-in viewer, office documents fall back
+  to a download link.
+- Attachments are capped at 12 MB each; the whole snapshot at 24 MB.
+
+## License
+
+MIT — see [LICENSE](LICENSE).

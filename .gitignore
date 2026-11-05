@@ -1,0 +1,15 @@
+# dependencies (installed by npm for the local test suites)
+node_modules/
+
+# npm pack output
+*.tgz
+
+# editors / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# test scratch
+tmp/
+coverage/

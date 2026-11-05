@@ -81,6 +81,10 @@ Keyboard: `Ctrl+K` palette, `Ctrl+N` new document, `Ctrl+S` save, `Ctrl+B`/`Ctrl
   document/attachment ids (dead references are dropped, repeated links deduped); a JSON import
   keeps the local layout untouched and folds the imported cards/links in, idempotently, so the
   same archive imported twice adds nothing twice.
+- ZIP imports are read defensively: a single entry may decompress to at most 16 MB, the whole
+  archive to 128 MB, with at most 2,000 entries and no entry past a 200:1 ratio once it passes
+  1 MB, so a tiny crafted archive answers 400 `archive exceeds safety budget: <reason>` instead
+  of expanding without bound.
 
 The browser half never touches the disk: it talks to the plugin's own same-origin route
 (`/dsh-scriptorium/*`) with a `{ ok, value }` / `{ ok: false, error: { message } }` envelope, the
@@ -162,18 +166,19 @@ what the plugin hub installs — ships without them, and the npm tarball never i
 | `tests/graph.mjs` | wiki-link parsing, graph building (tags, scope, orphans, undirected dedupe), deterministic force layout including 1000-node spread, zoom/fit maths | 13 |
 | `tests/merge.mjs` | JSON archive parsing and merge semantics (no overwrite, orphan re-rooting) | 8 |
 | `tests/archive.mjs` | ZIP writer/reader round-trip, archive build/parse, id remapping | 8 |
+| `tests/zip-budget.mjs` | hand-built ZIPs prove the reader's safety budgets: ratio, entry-count, declared single-entry and actual single-entry bombs and a declared-total bomb all fail closed, while a legitimate multi-megabyte archive imports | 6 |
 | `tests/canvas-import.mjs` | an exported board survives both import paths: ZIP remap re-points cards/links onto fresh ids, drops dangling/dead references and dedupes; JSON merge keeps the target layout, folds imported cards/links in deterministically | 9 |
 | `tests/compat.mjs` | a pre-canvas `data.json` survives load→save→reload verbatim (old bytes unchanged, 95-byte block overhead, no drift); unknown top-level blocks carried through; no prototype pollution | 7 |
 | `tests/downgrade.mjs` | a pre-canvas build's fixed-key rewrite of `data.json` is recovered from the layout copy on the next load: positions/sizes/links restored, document edits kept, deleted-document cards pruned, idempotent cycles, export carries the layout | 7 |
 | `tests/projects.mjs` | project sync (create/adopt/rename/missing/idempotent), unsafe ids ignored, linking and merge-into-existing semantics, store project state success/failure | 11 |
 | `tests/migrate.mjs` | the pre-rename data directory is moved into place on mount with documents, attachments, layout copy and revision counter intact; a second mount repeats nothing | 1 |
-| `tests/http.mjs` | the real host half on a throwaway server: state/save, project mirror + malformed file, media, ZIP export/import including the board round-trip | 17 |
+| `tests/http.mjs` | the real host half on a throwaway server: state/save, project mirror + malformed file, media, ZIP export/import including the board round-trip, and a bomb import answering 400 without touching the store | 18 |
 | `tests/export.mjs` | Markdown and JSON download naming and payload | 3 |
 | `tests/gui.mjs` | the built bundle in jsdom against a throwaway host: mount, create, type, preview, Ctrl+K, search, board move, trash/restore, settings, upload→canvas→drag→zoom, graph→connect→filter — asserting on the rendered DOM and on `data.json` | 10 |
 | `tests/battle.mjs` | adversarial pass: 400-operation model fuzz with invariants, hostile canvas payloads, wiki-link abuse, 800-node layout budget, concurrent saves, traversal names, broken archives, 3000-document round-trip | 10 |
 | `tests/live.mjs` | the running harness (health/state/save/conflict/export/projects) | 9 |
 
-245 checks in total (217 node suites, 10 jsdom GUI, 10 adversarial, 9 live).
+253 checks in total (224 node suites, 10 jsdom GUI, 10 adversarial, 9 live).
 
 The suites live in `tests/` on the **dev** branch. `main` — what GitHub shows, what the hub
 installs and what npm publishes — is `dev` minus `tests/`, so a plain checkout of `main` contains

@@ -8,7 +8,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { apply } from '../lib/index.js'
-import { parseZip } from '../lib/zip.js'
+import { parseZip, buildZip } from '../lib/zip.js'
 
 let passed = 0
 const pending = []
@@ -487,6 +487,25 @@ check('two simultaneous saves on the same revision: exactly one wins, the other 
   assert.equal(winner.json.value.revision, current + 1)
   assert.equal(loser.json.error.currentRevision, current + 1)
   assert.equal((await request('/state')).json.value.revision, current + 1)
+})
+
+// --- ZIP import safety budgets (reader-level, surfaced as 400) -----------------
+check('a decompression bomb is rejected with 400 and leaves the store untouched', async () => {
+  const stateBefore = await request('/state')
+  const mediaBefore = await request('/media')
+  // Highly compressible payload: 2 MB in, a couple of KB on the wire.
+  const bomb = buildZip([{ name: 'bomb.txt', data: Buffer.alloc(2 * 1024 * 1024, 0x41) }])
+  const result = await request('/archive/import', { method: 'POST', headers: { 'content-type': 'application/zip' }, body: bomb })
+  assert.equal(result.status, 400)
+  assert.equal(result.json.ok, false)
+  assert.match(result.json.error.message, /^archive exceeds safety budget: /)
+  assert.match(result.json.error.message, /compression ratio/i)
+
+  const stateAfter = await request('/state')
+  assert.deepEqual(stateAfter.json.value.snapshot, stateBefore.json.value.snapshot)
+  assert.equal(stateAfter.json.value.revision, stateBefore.json.value.revision)
+  const mediaAfter = await request('/media')
+  assert.equal(mediaAfter.json.value.entries.length, mediaBefore.json.value.entries.length)
 })
 
 for (const run of pending) await run()
